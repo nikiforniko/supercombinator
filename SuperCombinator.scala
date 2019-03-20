@@ -1,5 +1,6 @@
 package lambda
 
+
 case class SuperCombinatorDefinition(name: String, value: Abstr) {
   override def toString(): String = {
     def abstrStr(a: Abstr):String = {
@@ -19,6 +20,7 @@ case class SuperCombinator(name: String) extends Term {
 }
 
 object SuperCombinator {
+  var counter = 0
   def LambdaLifting(term: Term): Term = {
     val (newTerm, _, _) = lambdaLifting(term, Set[Var](), Set[Var](), false)
     newTerm
@@ -54,12 +56,14 @@ object SuperCombinator {
       case default => (term, boundVariables, freeVariables)
     }
   }
-  def WrapAbstraction(term: Term, set: Set[Var]): Term = {
+  def WrapAbstraction(abstr: Abstr, set: Set[Var]): Term = {
     if (set isEmpty) {
-      term
+      counter = counter + 1
+      println(SuperCombinatorDefinition(counter.toString, abstr))
+      SuperCombinator(counter.toString)
     } else {
       val variable = set.head
-      Appl(WrapAbstraction(Abstr(variable, term), set - variable), variable)
+      Appl(WrapAbstraction(Abstr(variable, abstr), set - variable), variable)
     }
   }
 }
