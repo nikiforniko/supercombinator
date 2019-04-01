@@ -16,7 +16,7 @@ case class Abstr(variable: Var, body: Term) extends Term {
     "λ"+variable+"."+body+""
 }
 
-trait BuiltIn extends Term
+trait BuiltIn extends Term with SPTerm
 
 case class IntTerm(value: Int) extends BuiltIn {
   override def toString = value.toString

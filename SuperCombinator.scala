@@ -1,69 +1,58 @@
 package lambda
 
+trait SPTerm
 
-case class SuperCombinatorDefinition(name: String, value: Abstr) {
-  override def toString(): String = {
-    def abstrStr(a: Abstr):String = {
-      
-      val other = a.body match {
-        case b: Abstr => abstrStr(b)
-        case default => a.body.toString()
-      }
-      a.variable + " " + other
-    }
-    "$"+name+" "+abstrStr(value)
-  }
+case class SPVar(name: String) extends SPTerm {
+    override def toString():String = name.toString
 }
 
-case class SuperCombinator(name: String) extends Term {
-  override def toString = "$"+name
+case class SPDef(vars: Array[SPVar], body: SPTerm) extends SPTerm {
+    override def toString():String = "λ" + vars.map(_.toString()).foldLeft("")(_ + " " + _) + "." + body.toString()
 }
+
+case class SPAppl(func: SPTerm, args: Array[SPTerm]) extends SPTerm {
+    override def toString():String = "(" + func.toString() + " " + args.map(_ toString()).foldLeft("")(_ + " " + _) + ")"
+}
+
 
 object SuperCombinator {
-  var counter = 0
-  def LambdaLifting(term: Term): Term = {
+  def LambdaLifting(term: Term): SPTerm = {
     val (newTerm, _, _) = lambdaLifting(term, Set[Var](), Set[Var](), false)
     newTerm
   }
-  def lambdaLifting(term: Term, boundVariables: Set[Var], freeVariables: Set[Var], fromLambda: Boolean): (Term, Set[Var], Set[Var]) = {
+  def lambdaLifting(term: Term, boundVariables: Set[Var], freeVariables: Set[Var], fromLambda: Boolean): (SPTerm, Set[Var], Set[Var]) = {
     term match {
       case Abstr(variable, body) => {
-        val (newTerm, newBound, newFree) = 
+        val (newSP, newBound, newFree) = 
           if (fromLambda) {
             lambdaLifting(body, boundVariables + (variable), freeVariables, true)
           } else {
             lambdaLifting(body, Set(variable), freeVariables ++ boundVariables, true)
           }
+        val func: SPDef = newSP match {
+          case SPDef(vars, body) => SPDef(SPVar(variable name) +: vars, body)
+          case default => SPDef(Array(SPVar(variable.name)), newSP)
+        }
         val newNewBound = newBound - variable
         if (newNewBound isEmpty) {
-          (WrapAbstraction(Abstr(variable, newTerm), newFree), freeVariables, freeVariables.empty)
+          (SPAppl(SPDef(newFree.toArray.map(x => SPVar(x.name)) ++ func.vars, func.body), newFree.toArray.map(x => SPVar(x.name))), freeVariables, newNewBound)
         } else {
-          (newTerm, newNewBound, newFree)
+          (func, newNewBound, newFree)
         }
       }
       case Appl(first, second) => {
-        val (firstTerm, firstBound, firstFree) = lambdaLifting(first, boundVariables, freeVariables, false)
-        val (secondTerm, secondBound, secondFree) = lambdaLifting(second, boundVariables, freeVariables, false)
-        (Appl(firstTerm, secondTerm), firstBound ++ secondBound, firstFree ++ secondFree)
+        val (firstSP, firstBound, firstFree) = lambdaLifting(first, boundVariables, freeVariables, false)
+        val (secondSP, secondBound, secondFree) = lambdaLifting(second, boundVariables, freeVariables, false)
+        (SPAppl(firstSP, Array(secondSP)), firstBound ++ secondBound, firstFree ++ secondFree)
       }
       case v: Var => {
         if (boundVariables contains v) {
-          (v, boundVariables, freeVariables)
+          (SPVar(v.name), boundVariables, freeVariables)
         } else {
-          (v, boundVariables, freeVariables + v)
+          (SPVar(v.name), boundVariables, freeVariables + v)
         }
       }
-      case default => (term, boundVariables, freeVariables)
-    }
-  }
-  def WrapAbstraction(abstr: Abstr, set: Set[Var]): Term = {
-    if (set isEmpty) {
-      counter = counter + 1
-      println(SuperCombinatorDefinition(counter.toString, abstr))
-      SuperCombinator(counter.toString)
-    } else {
-      val variable = set.head
-      Appl(WrapAbstraction(Abstr(variable, abstr), set - variable), variable)
+      case b:BuiltIn => (b, boundVariables, freeVariables)
     }
   }
 }
