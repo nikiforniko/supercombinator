@@ -1,5 +1,3 @@
-package lambda
-
 trait SPTerm
 
 case class SPVar(name: String) extends SPTerm {
@@ -85,9 +83,6 @@ object SPReduce {
   val combApply: SPTerm => Option[SPTerm] = {
     case ApplN(applicable, paramsList) =>
       applicable.result(paramsList)
-      //val result = applicable.result(paramsList)
-      //println(applicable +"(" + paramsList.mkString(", ") + ") => " + result)
-      //result
     case default => {
       None
     }
