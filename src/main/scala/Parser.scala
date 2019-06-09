@@ -17,13 +17,9 @@ object FormulaParser extends RegexParsers with PackratParsers {
     })
     lazy val term: PackratParser[Term] = varP | applP | abstrP | builtInFunc | number
 
-    def apply(code: String): Option[Term] =
+    def Parse(code: String): Either[Term, String] =
       parse(term, new PackratReader(new CharSequenceReader(code))) match {
-        case Success(result: Term, next) => Some(result)
-        case NoSuccess(msg, next) =>{
-          println(msg)
-          None
-        }
+        case Success(result: Term, next) => Left(result)
+        case NoSuccess(msg, next) => Right(msg)
       }
-    
 }

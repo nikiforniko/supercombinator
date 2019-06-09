@@ -4,7 +4,7 @@ case class SCVar(name: String) extends SCTerm {
     override def toString: String = name.toString
 }
 
-case class SCDef(vars: List[SCVar], body: SCTerm) extends Combinator {
+case class SCDef(vars: List[SCVar], body: SCTerm) extends Combinator with SCTerm {
   override def toString: String = "[" + vars.mkString(" ") + "]" + body
   override def result(x: List[SCTerm]): Option[SCTerm] = if (x.length == vars.length) {
     val ctn = (vars zip x).toMap
@@ -44,8 +44,7 @@ object SuperCombinator {
         }
         val newNewBound = newBound - variable
         if (newNewBound isEmpty) {
-          (ApplyNArgs(SCDef(newFree.toList.map(x => SCVar(x.name)) ++ func.vars, func.body), newFree.toList.map(x => SCVar(x.name))), freeVariables, newNewBound)
-        } else {
+          (ApplyNArgs(SCDef(newFree.toList.map(x => SCVar(x.name)) ++ func.vars, func.body), newFree.toList.map(x => SCVar(x.name))), freeVariables, newNewBound) } else {
           (func, newNewBound, newFree)
         }
       }

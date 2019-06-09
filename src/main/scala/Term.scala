@@ -15,7 +15,7 @@ case class Abstr(variable: Var, body: Term) extends Term {
 }
 
 trait BuiltIn extends Term with SCTerm
-trait Combinator extends SCTerm {
+trait Combinator {
   def result(x: List[SCTerm]): Option[SCTerm]
 }
 
