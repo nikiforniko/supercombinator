@@ -68,6 +68,5 @@ case object IntMult extends BuiltIn with Combinator{
     } else {
       None
     }
-
   }
 }
