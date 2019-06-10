@@ -6,7 +6,7 @@ object FormulaParser extends RegexParsers with PackratParsers {
 
     lazy val applP: PackratParser[Appl] = ("""\s*\(\s*""".r ~> term <~ " *".r) ~ (term <~ """\s*\)\s*""".r) ^^ {case x ~ y => Appl(x, y)}
 
-    lazy val abstrP: PackratParser[Abstr] = ("λ" ~> varP <~ ".") ~ term ^^ {case v ~ b => Abstr(v, b)}
+    lazy val abstrP: PackratParser[Abstr] = ("\\" ~> varP <~ ".") ~ term ^^ {case v ~ b => Abstr(v, b)}
     def number: Parser[IntTerm] = "[0-9]+".r ^^ (s => IntTerm(s.toInt))
     
     def builtInFunc: Parser[BuiltIn] = """[-+*/]""".r ^^ ({
@@ -15,7 +15,7 @@ object FormulaParser extends RegexParsers with PackratParsers {
       case "*" => IntMult
       case "/" => IntDiv
     })
-    lazy val term: PackratParser[Term] = varP | applP | abstrP | builtInFunc | number
+    lazy val term: PackratParser[Term] =  abstrP | varP | applP | builtInFunc | number
 
     def Parse(code: String): Either[Term, String] =
       parse(term, new PackratReader(new CharSequenceReader(code))) match {
