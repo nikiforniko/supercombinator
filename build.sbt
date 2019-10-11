@@ -9,7 +9,14 @@ lazy val root = (project in file("."))
   .settings(
     name := "lambda",
     libraryDependencies += scalaTest % Test,
-    libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2"
+    libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
+    libraryDependencies += "org.http4s" %% "http4s-dsl"          % "0.17.5",
+    libraryDependencies += "org.http4s" %% "http4s-blaze-server" % "0.17.5",
+    libraryDependencies += "org.http4s" %% "http4s-blaze-client" % "0.17.5",
+    libraryDependencies += "org.http4s" %% "http4s-circe"        % "0.17.5",
+    libraryDependencies += "io.circe" %% "circe-generic" % "0.8.0",
+    libraryDependencies += "io.circe" %% "circe-literal" % "0.8.0",
+    libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime
   )
 
 // Uncomment the following for publishing to Sonatype.
