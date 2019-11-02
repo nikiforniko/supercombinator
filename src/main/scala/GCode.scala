@@ -64,34 +64,39 @@ case object End extends Instruction {
 }
 
 case class GlobStart(s: String, k: Int) extends Instruction {
-  override def toString = s"GLOBSTART $s, $k"
+  override def toString = s"GLOBSTART $s $k"
 }
 
 object Compiler {
   var counter: Int = 0;
-  var Funcs = scala.collection.mutable.HashMap.empty[String,List[Instruction]];
-  def CScheme(prog: SCTerm, n: Int, r: Map[SCVar,Int]): List[Instruction] = {
+  var Funcs = scala.collection.mutable.HashMap.empty[String, List[Instruction]];
+  def CScheme(prog: SCTerm, n: Int, r: Map[SCVar, Int]): List[Instruction] = {
     prog match {
-      case i: IntTerm    => List[Instruction](PushInt(i.value))
-      case v: SCVar      => List[Instruction](Push(n - (r get v get))) // n - r(x)
-      case SPAppl(fst, snd)     => CScheme(snd, n, r) ++ CScheme(fst, n+1, r) :+ MkAp
+      case i: IntTerm => List[Instruction](PushInt(i.value))
+      case v: SCVar   => List[Instruction](Push(n - (r get v get))) // n - r(x)
+      case SPAppl(fst, snd) =>
+        CScheme(snd, n, r) ++ CScheme(fst, n + 1, r) :+ MkAp
       case d: SCDef => {
         counter += 1
         val funcName = s"f$counter"
         Funcs += (funcName -> FScheme(d, n, r))
         List[Instruction](PushGlobal(funcName))
       }
-      case _ =>  List[Instruction](PushGlobal(prog.toString))
+      case _ => List[Instruction](PushGlobal(prog.toString))
     }
   }
-  def EScheme(prog: SCTerm, n: Int, r: Map[SCVar,Int]): List[Instruction] = {
+  def EScheme(prog: SCTerm, n: Int, r: Map[SCVar, Int]): List[Instruction] = {
     CScheme(prog, n, r) :+ Eval
   }
-  def FScheme(func: SCDef, n: Int, r: Map[SCVar,Int]): List[Instruction] = {
-    val newR = r ++ (func.vars.zip(Range(0, func.vars.length)) map ({case (v, i) =>  v -> (2 * func.vars.length - i) }))
-    EScheme(func.body, 2 * func.vars.length  + 1, newR)  :+ Update(2 * func.vars.length + 1) :+ Ret
+  def FScheme(func: SCDef, n: Int, r: Map[SCVar, Int]): List[Instruction] = {
+    val newR = r ++ (func.vars.zip(Range(0, func.vars.length)) map ({
+      case (v, i) => v -> (2 * func.vars.length - i)
+    }))
+    EScheme(func.body, 2 * func.vars.length + 1, newR) :+ Update(
+      2 * func.vars.length + 1
+    ) :+ Ret
   }
-  def BScheme(prog: SCTerm, n: Int, r: Map[SCVar,Int]): List[Instruction] = {
+  def BScheme(prog: SCTerm, n: Int, r: Map[SCVar, Int]): List[Instruction] = {
     List[Instruction]()
   }
 }

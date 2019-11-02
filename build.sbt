@@ -1,8 +1,8 @@
 import Dependencies._
 
-ThisBuild / scalaVersion     := "2.12.8"
-ThisBuild / version          := "0.1.0-SNAPSHOT"
-ThisBuild / organization     := "com.example"
+ThisBuild / scalaVersion := "2.12.8"
+ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / organization := "com.example"
 ThisBuild / organizationName := "example"
 
 lazy val root = (project in file("."))
@@ -10,15 +10,16 @@ lazy val root = (project in file("."))
     name := "lambda",
     libraryDependencies += scalaTest % Test,
     libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
-    libraryDependencies += "org.http4s" %% "http4s-dsl"          % "0.17.5",
+    libraryDependencies += "org.http4s" %% "http4s-dsl" % "0.17.5",
     libraryDependencies += "org.http4s" %% "http4s-blaze-server" % "0.17.5",
     libraryDependencies += "org.http4s" %% "http4s-blaze-client" % "0.17.5",
-    libraryDependencies += "org.http4s" %% "http4s-circe"        % "0.17.5",
+    libraryDependencies += "org.http4s" %% "http4s-circe" % "0.17.5",
     libraryDependencies += "io.circe" %% "circe-generic" % "0.8.0",
     libraryDependencies += "io.circe" %% "circe-literal" % "0.8.0",
     libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime
   )
 
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.2.0")
 // Uncomment the following for publishing to Sonatype.
 // See https://www.scala-sbt.org/1.x/docs/Using-Sonatype.html for more detail.
 

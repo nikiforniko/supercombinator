@@ -10,27 +10,30 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import scala.concurrent.duration._
 
-
 object Gmachine extends ServerApp {
 
-  val service = CORS(HttpService {
-    case req@POST -> Root => {
-      req.as(jsonOf[Input]) flatMap (
-        input => {
+  val service = CORS(
+    HttpService {
+      case req @ POST -> Root => {
+        req.as(jsonOf[Input]) flatMap (input => {
           InstructionsParser.ParseAll(input.code) match {
             case Left(err) => BadRequest(err)
-            case Right(s) => Ok(MySystem.run(s).asJson)
+            case Right(s)  => Ok(MySystem.run(s).asJson)
           }
         })
       }
-  }, CORSConfig(
+    },
+    CORSConfig(
       anyOrigin = true,
       anyMethod = true,
       allowCredentials = true,
-      maxAge = 1.day.toSeconds)
+      maxAge = 1.day.toSeconds
     )
+  )
 
-  def server(args: List[String]) = BlazeBuilder.bindHttp(8080)
-    .mountService(service, "/")
-    .start
+  def server(args: List[String]) =
+    BlazeBuilder
+      .bindHttp(8080)
+      .mountService(service, "/")
+      .start
 }

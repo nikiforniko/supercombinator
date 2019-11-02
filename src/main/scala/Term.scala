@@ -6,12 +6,12 @@ case class Var(name: String) extends Term {
 
 case class Appl(first: Term, second: Term) extends Term {
   override def toString(): String =
-    "("+first+" "+second+")"
+    "(" + first + " " + second + ")"
 }
 
 case class Abstr(variable: Var, body: Term) extends Term {
   override def toString(): String =
-    "λ"+variable+"."+body+""
+    "λ" + variable + "." + body + ""
 }
 
 trait BuiltIn extends Term with SCTerm
@@ -26,7 +26,10 @@ case class IntTerm(value: Int) extends BuiltIn {
 case object IntSum extends BuiltIn with Combinator {
   override def toString = "+"
   def result(x: List[SCTerm]): Option[SCTerm] = {
-    val y = x.map({case i:IntTerm => Some(i); case _ => None}).filter(!_.isEmpty).map(_ get)
+    val y = x
+      .map({ case i: IntTerm => Some(i); case _ => None })
+      .filter(!_.isEmpty)
+      .map(_ get)
     if (x.length == 2 && y.length == 2) {
       Some(IntTerm(y.head.value + y.tail.head.value))
     } else {
@@ -38,7 +41,10 @@ case object IntSum extends BuiltIn with Combinator {
 case object IntSub extends BuiltIn with Combinator {
   override def toString = "-"
   def result(x: List[SCTerm]): Option[SCTerm] = {
-    val y = x.map({case i:IntTerm => Some(i); case _ => None}).filter(!_.isEmpty).map(_ get)
+    val y = x
+      .map({ case i: IntTerm => Some(i); case _ => None })
+      .filter(!_.isEmpty)
+      .map(_ get)
     if (x.length == 2 && y.length == 2) {
       Some(IntTerm(y.head.value - y.tail.head.value))
     } else {
@@ -50,7 +56,10 @@ case object IntSub extends BuiltIn with Combinator {
 case object IntDiv extends BuiltIn with Combinator {
   override def toString = "div"
   def result(x: List[SCTerm]): Option[SCTerm] = {
-    val y = x.map({case i:IntTerm => Some(i); case _ => None}).filter(!_.isEmpty).map(_ get)
+    val y = x
+      .map({ case i: IntTerm => Some(i); case _ => None })
+      .filter(!_.isEmpty)
+      .map(_ get)
     if (x.length == 2 && y.length == 2) {
       Some(IntTerm(y.head.value / y.tail.head.value))
     } else {
@@ -59,10 +68,13 @@ case object IntDiv extends BuiltIn with Combinator {
   }
 }
 
-case object IntMult extends BuiltIn with Combinator{
+case object IntMult extends BuiltIn with Combinator {
   override def toString = "*"
   def result(x: List[SCTerm]): Option[SCTerm] = {
-    val y = x.map({case i:IntTerm => Some(i); case _ => None}).filter(!_.isEmpty).map(_ get)
+    val y = x
+      .map({ case i: IntTerm => Some(i); case _ => None })
+      .filter(!_.isEmpty)
+      .map(_ get)
     if (x.length == 2 && y.length == 2) {
       Some(IntTerm(y.head.value * y.tail.head.value))
     } else {
