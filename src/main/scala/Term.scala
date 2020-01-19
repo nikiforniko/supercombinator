@@ -24,7 +24,7 @@ case class IntTerm(value: Int) extends BuiltIn {
 }
 
 case object IntSum extends BuiltIn with Combinator {
-  override def toString = "+"
+  override def toString = "sum"
   def result(x: List[SCTerm]): Option[SCTerm] = {
     val y = x
       .map({ case i: IntTerm => Some(i); case _ => None })
@@ -39,7 +39,7 @@ case object IntSum extends BuiltIn with Combinator {
 }
 
 case object IntSub extends BuiltIn with Combinator {
-  override def toString = "-"
+  override def toString = "sub"
   def result(x: List[SCTerm]): Option[SCTerm] = {
     val y = x
       .map({ case i: IntTerm => Some(i); case _ => None })
@@ -69,7 +69,7 @@ case object IntDiv extends BuiltIn with Combinator {
 }
 
 case object IntMult extends BuiltIn with Combinator {
-  override def toString = "*"
+  override def toString = "mul"
   def result(x: List[SCTerm]): Option[SCTerm] = {
     val y = x
       .map({ case i: IntTerm => Some(i); case _ => None })

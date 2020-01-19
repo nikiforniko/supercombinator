@@ -12,12 +12,7 @@ object Main extends App {
           "Result of reduction: " + SPReduce.toNormalForm(SPReduce.combMuNu)(sp)
         )
         println("G-Code:")
-        println(Compiler.EScheme(sp, 0, Map.empty).mkString("\n"))
-        println(
-          Compiler.Funcs
-            .map({ case (k, v) => k + ":\n" + v.mkString("\n") })
-            .mkString("\n")
-        )
+        println(Compiler.Compile(sp).mkString("\n"))
       }
       case Right(msg) => println(msg)
     }

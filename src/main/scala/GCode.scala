@@ -67,9 +67,13 @@ case class GlobStart(s: String, k: Int) extends Instruction {
   override def toString = s"GLOBSTART $s $k"
 }
 
+
 object Compiler {
+  def BuiltIn2ArgDef(i: Instruction): List[Instruction] = {
+    Push(1) :: Eval :: Push(1) :: Eval :: i :: Update(3) :: Pop(2) :: Unwind :: Nil
+  }
   var counter: Int = 0;
-  var Funcs = scala.collection.mutable.HashMap.empty[String, List[Instruction]];
+  var Funcs = scala.collection.mutable.HashMap.empty[String, (Int, List[Instruction])];
   def CScheme(prog: SCTerm, n: Int, r: Map[SCVar, Int]): List[Instruction] = {
     prog match {
       case i: IntTerm => List[Instruction](PushInt(i.value))
@@ -79,24 +83,35 @@ object Compiler {
       case d: SCDef => {
         counter += 1
         val funcName = s"f$counter"
-        Funcs += (funcName -> FScheme(d, n, r))
+        Funcs += (funcName -> (d.vars.length, FScheme(d, n, r)))
         List[Instruction](PushGlobal(funcName))
       }
       case _ => List[Instruction](PushGlobal(prog.toString))
     }
   }
-  def EScheme(prog: SCTerm, n: Int, r: Map[SCVar, Int]): List[Instruction] = {
-    CScheme(prog, n, r) :+ Eval
+  def RScheme(prog: SCTerm, n: Int, r: Map[SCVar, Int]): List[Instruction] = {
+    CScheme(prog, n, r) :+ Update(n + 1) :+ Pop(n) :+ Unwind
   }
   def FScheme(func: SCDef, n: Int, r: Map[SCVar, Int]): List[Instruction] = {
     val newR = r ++ (func.vars.zip(Range(0, func.vars.length)) map ({
-      case (v, i) => v -> (2 * func.vars.length - i)
+      case (v, i) => v -> (func.vars.length - i)
     }))
-    EScheme(func.body, 2 * func.vars.length + 1, newR) :+ Update(
-      2 * func.vars.length + 1
-    ) :+ Ret
+    RScheme(func.body, func.vars.length, newR)
   }
   def BScheme(prog: SCTerm, n: Int, r: Map[SCVar, Int]): List[Instruction] = {
     List[Instruction]()
+  }
+  def mapp(b: BuiltIn): Instruction = {
+    b match {
+      case IntSum => Add
+      case IntSub => Sub
+      case IntDiv => Div
+      case IntMult => Mul
+    }
+  }
+  def Compile(prog: SCTerm): List[Instruction] = {
+    Funcs ++= List[BuiltIn](IntSum, IntSub, IntDiv, IntMult).map(f => (f.toString -> ((2, BuiltIn2ArgDef(mapp(f))))))
+    Funcs += ("MAIN" -> (0, RScheme(prog, 0, Map.empty)))
+    Begin :: PushGlobal("MAIN") :: Eval :: End :: Funcs.map({ case (k, (n, b)) => GlobStart(k, n) :: b}).toList.flatten
   }
 }
