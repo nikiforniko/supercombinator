@@ -33,7 +33,7 @@ object Gmachine extends ServerApp {
 
   def server(args: List[String]) =
     BlazeBuilder
-      .bindHttp(80)
+      .bindHttp(sys.env.getOrElse("PORT", "8080").toString().toInt)
       .mountService(service, "/")
       .start
 }
