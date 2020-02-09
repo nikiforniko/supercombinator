@@ -56,6 +56,10 @@ case object Div extends Instruction {
   override def toString = "DIV"
 }
 
+case object Gte extends Instruction {
+  override def toString = "GTE"
+}
+
 case object Begin extends Instruction {
   override def toString = "BEGIN"
 }
@@ -78,7 +82,7 @@ object Compiler {
     prog match {
       case i: IntTerm => List[Instruction](PushInt(i.value))
       case v: SCVar   => List[Instruction](Push(n - (r get v get))) // n - r(x)
-      case SPAppl(fst, snd) =>
+      case SCAppl(fst, snd) =>
         CScheme(snd, n, r) ++ CScheme(fst, n + 1, r) :+ MkAp
       case d: SCDef => {
         counter += 1
@@ -107,10 +111,17 @@ object Compiler {
       case IntSub => Sub
       case IntDiv => Div
       case IntMult => Mul
+      case IntGte => Gte
     }
   }
   def Compile(prog: SCTerm): List[Instruction] = {
-    Funcs ++= List[BuiltIn](IntSum, IntSub, IntDiv, IntMult).map(f => (f.toString -> ((2, BuiltIn2ArgDef(mapp(f))))))
+    Funcs ++= List[BuiltIn](IntSum, IntSub, IntDiv, IntMult, IntGte).map(f => (f.toString -> ((2, BuiltIn2ArgDef(mapp(f))))))
+    val f = SCVar("f")
+    val a = SCVar("a")
+    val b = SCVar("b")
+    Funcs += (Tru.toString      -> (2, FScheme(SCDef(a :: b :: Nil,                            a), 0, Map.empty)))
+    Funcs += (Fls.toString      -> (2, FScheme(SCDef(a :: b :: Nil,                            b), 0, Map.empty)))
+    Funcs += (IFClause.toString -> (3, FScheme(SCDef(f :: a :: b :: Nil, SCAppl(SCAppl(f, a), b)), 0, Map.empty)))
     Funcs += ("MAIN" -> (0, RScheme(prog, 0, Map.empty)))
     Begin :: PushGlobal("MAIN") :: Eval :: End :: Funcs.map({ case (k, (n, b)) => GlobStart(k, n) :: b}).toList.flatten
   }

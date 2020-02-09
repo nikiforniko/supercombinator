@@ -8,9 +8,6 @@ object Main extends App {
         println("Lambda: " + value)
         val sp = SuperCombinator.LambdaLifting(value)
         println("Supercombinator term: " + sp)
-        println(
-          "Result of reduction: " + SPReduce.toNormalForm(SPReduce.combMuNu)(sp)
-        )
         println("G-Code:")
         println(Compiler.Compile(sp).mkString("\n"))
       }

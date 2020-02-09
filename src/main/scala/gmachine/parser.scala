@@ -2,7 +2,7 @@ import scala.util.parsing.combinator._
 object InstructionsParser extends RegexParsers {
   val eol = System.getProperty("line.separator")
   val instructionMap: Map[String, Instruction] =
-    (MkAp :: Get :: Eval :: Add :: Sub :: Div :: Mul :: Begin :: End :: Ret :: Unwind :: Nil)
+    (MkAp :: Get :: Eval :: Add :: Sub :: Div :: Mul :: Gte :: Begin :: End :: Ret :: Unwind :: Nil)
       .map(x => (x.toString, x))
       .toMap
   val simpleInstruction: Parser[Instruction] = instructionMap.keys

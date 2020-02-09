@@ -20,8 +20,6 @@ lazy val root = (project in file("."))
   )
 
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.2.0")
-mainClass in (Compile, run) := Some("Gmachine")
-enablePlugins(JavaAppPackaging)
 // Uncomment the following for publishing to Sonatype.
 // See https://www.scala-sbt.org/1.x/docs/Using-Sonatype.html for more detail.
 

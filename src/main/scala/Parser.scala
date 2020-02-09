@@ -12,14 +12,19 @@ object FormulaParser extends RegexParsers with PackratParsers {
   lazy val abstrP: PackratParser[Abstr] = ("\\" ~> varP <~ ".") ~ term ^^ {
     case v ~ b => Abstr(v, b)
   }
+
   def number: Parser[IntTerm] = "[0-9]+".r ^^ (s => IntTerm(s.toInt))
 
   def builtInFunc: Parser[BuiltIn] =
-    """[-+*/]""".r ^^ ({
+    """[-+*/]|>=|IF|TRU|FLS""".r ^^ ({
       case "+" => IntSum
       case "-" => IntSub
       case "*" => IntMult
       case "/" => IntDiv
+      case ">=" => IntGte
+      case "IF" => IFClause
+      case "TRU" => Tru
+      case "FLS" => Fls
     })
   lazy val term
       : PackratParser[Term] = abstrP | varP | applP | builtInFunc | number

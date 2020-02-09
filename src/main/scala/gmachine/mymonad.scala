@@ -107,10 +107,11 @@ case object MySystem {
                 case Slide(k)      => slide(k)
                 case Update(k)     => update(k)
                 case Alloc(k)      => alloc(k)
-                case Add           => ensureTwoIntsFromStack(_ + _)
-                case Mul           => ensureTwoIntsFromStack(_ * _)
-                case Div           => ensureTwoIntsFromStack(_ - _)
-                case Sub           => ensureTwoIntsFromStack(_ / _)
+                case Add           => ensureTwoIntsReturnInt(_ + _)
+                case Mul           => ensureTwoIntsReturnInt(_ * _)
+                case Div           => ensureTwoIntsReturnInt(_ - _)
+                case Sub           => ensureTwoIntsReturnInt(_ / _)
+                case Gte           => ensureTwoIntsReturnBool(_ >= _)
                 case MkAp          => mkAp()
                 case Eval          => eval()
                 case Unwind        => unwind()
@@ -266,8 +267,45 @@ case object MySystem {
     }
   }
   // TODO(a.eremeev) make function that can check that there is enough values in stack
-  def ensureTwoIntsFromStack(
+  def ensureTwoIntsReturnInt(
       f: (Int, Int) => Int
+  ): Machine => MyMonad[Machine] = {
+    ensureTwoInts((k1, k2, m) => {
+      val newN = Node(m.counter, NodeInt(f(k1, k2)))
+      val newM = m.copy(
+        counter = m.counter + 1,
+        stack = m.counter :: (m.stack.drop(2)),
+        graph = m.graph + (m.counter -> newN),
+        commands = m.commands.drop(1)
+      )
+      val diff = initDiff(newM, m).copy(
+        add = GraphDiff(newN.toNodeView :: Nil, Nil)
+      )
+      MyMonad(diff :: Nil, Right(newM))
+    })
+  }
+
+  def ensureTwoIntsReturnBool(
+      f: (Int, Int) => Boolean
+  ): Machine => MyMonad[Machine] = {
+    ensureTwoInts((k1, k2, m) => {
+      val fName = if (f(k1, k2)) Tru else Fls
+      val fun = m.funcs.get(fName.toString).get
+      val n = Node(m.counter, fun)
+      val newM = m.copy(
+        counter = m.counter + 1,
+        stack = m.counter :: (m.stack.drop(2)),
+        graph = m.graph + (n.id -> n),
+        commands = m.commands.drop(1)
+      )
+      val diff =
+        initDiff(newM, m).copy(add = GraphDiff(n.toNodeView :: Nil, Nil))
+      MyMonad(diff :: Nil, Right(newM))
+    })
+  }
+
+  def ensureTwoInts(
+    f: (Int, Int, Machine) => MyMonad[Machine]
   ): Machine => MyMonad[Machine] = { (m: Machine) =>
     if (m.stack.length < 2) {
       MyMonad(
@@ -279,17 +317,7 @@ case object MySystem {
     } else {
       m.stack.take(2).map(m.getID(_).v) match {
         case NodeInt(k1) :: NodeInt(k2) :: Nil => {
-          val newN = Node(m.counter, NodeInt(f(k1, k2)))
-          val newM = m.copy(
-            counter = m.counter + 1,
-            stack = m.counter :: (m.stack.drop(2)),
-            graph = m.graph + (m.counter -> newN),
-            commands = m.commands.drop(1)
-          )
-          val diff = initDiff(newM, m).copy(
-            add = GraphDiff(newN.toNodeView :: Nil, Nil)
-          )
-          MyMonad(diff :: Nil, Right(newM))
+          f(k1, k2, m)
         }
         case _ => {
           val err = s"Bad Nodes on the top of stack want Int Nodes, Have ${m
@@ -300,6 +328,7 @@ case object MySystem {
       }
     }
   }
+
   def eval(): Machine => MyMonad[Machine] = { (m: Machine) =>
     if (m.stack.length < 1) {
       MyMonad(
