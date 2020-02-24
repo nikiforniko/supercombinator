@@ -31,3 +31,7 @@ case class DiffWithErr(
     diff: List[Diff],
     err: Option[String]
 )
+
+case class Output(
+  result: List[String],
+)

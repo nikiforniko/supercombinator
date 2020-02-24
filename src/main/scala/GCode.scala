@@ -12,6 +12,9 @@ case class PushGlobal(f: String) extends Instruction {
 case class PushInt(i: Int) extends Instruction {
   override def toString = s"PUSHINT $i"
 }
+case class PushBool(i: Boolean) extends Instruction {
+  override def toString = s"PUSHBOOL $i".toUpperCase
+}
 case class Slide(n: Int) extends Instruction {
   override def toString = s"SLIDE $n"
 }
@@ -71,17 +74,37 @@ case class GlobStart(s: String, k: Int) extends Instruction {
   override def toString = s"GLOBSTART $s $k"
 }
 
+case class Label(k: Int) extends Instruction{
+  override def toString = s"LABEL $k"
+}
+
+case class Jump(k: Int) extends Instruction{
+  override def toString = s"JUMP $k"
+}
+
+case class JFalse(k: Int) extends Instruction{
+  override def toString = s"JFALSE $k"
+}
 
 object Compiler {
   def BuiltIn2ArgDef(i: Instruction): List[Instruction] = {
     Push(1) :: Eval :: Push(1) :: Eval :: i :: Update(3) :: Pop(2) :: Unwind :: Nil
   }
   var counter: Int = 0;
-  var Funcs = scala.collection.mutable.HashMap.empty[String, (Int, List[Instruction])];
+  var labelCounter: Int = 0;
+  var Funcs =
+    scala.collection.mutable.HashMap.empty[String, (Int, List[Instruction])];
   def CScheme(prog: SCTerm, n: Int, r: Map[SCVar, Int]): List[Instruction] = {
     prog match {
-      case i: IntTerm => List[Instruction](PushInt(i.value))
-      case v: SCVar   => List[Instruction](Push(n - (r get v get))) // n - r(x)
+      case SCAppl(SCAppl(SCAppl(IFClause, cond), thn), els) => {
+        labelCounter += 2
+        (CScheme(cond, n, r) :+ Eval :+ JFalse(labelCounter - 1)) ++
+        (CScheme(thn, n, r) :+ Jump(labelCounter) :+ Label(labelCounter - 1)) ++
+        (CScheme(els, n, r) :+ Label(labelCounter))
+      }
+      case IntTerm(v)  => PushInt(v) :: Nil
+      case BoolTerm(v) => PushBool(v) :: Nil
+      case v: SCVar    => Push(n - (r get v get)) :: Nil // n - r(x)
       case SCAppl(fst, snd) =>
         CScheme(snd, n, r) ++ CScheme(fst, n + 1, r) :+ MkAp
       case d: SCDef => {
@@ -107,22 +130,20 @@ object Compiler {
   }
   def mapp(b: BuiltIn): Instruction = {
     b match {
-      case IntSum => Add
-      case IntSub => Sub
-      case IntDiv => Div
+      case IntSum  => Add
+      case IntSub  => Sub
+      case IntDiv  => Div
       case IntMult => Mul
-      case IntGte => Gte
+      case IntGte  => Gte
     }
   }
   def Compile(prog: SCTerm): List[Instruction] = {
-    Funcs ++= List[BuiltIn](IntSum, IntSub, IntDiv, IntMult, IntGte).map(f => (f.toString -> ((2, BuiltIn2ArgDef(mapp(f))))))
-    val f = SCVar("f")
-    val a = SCVar("a")
-    val b = SCVar("b")
-    Funcs += (Tru.toString      -> (2, FScheme(SCDef(a :: b :: Nil,                            a), 0, Map.empty)))
-    Funcs += (Fls.toString      -> (2, FScheme(SCDef(a :: b :: Nil,                            b), 0, Map.empty)))
-    Funcs += (IFClause.toString -> (3, FScheme(SCDef(f :: a :: b :: Nil, SCAppl(SCAppl(f, a), b)), 0, Map.empty)))
+    Funcs ++= List[BuiltIn](IntSum, IntSub, IntDiv, IntMult, IntGte)
+      .map(f => (f.toString -> ((2, BuiltIn2ArgDef(mapp(f))))))
     Funcs += ("MAIN" -> (0, RScheme(prog, 0, Map.empty)))
-    Begin :: PushGlobal("MAIN") :: Eval :: End :: Funcs.map({ case (k, (n, b)) => GlobStart(k, n) :: b}).toList.flatten
+    Begin :: PushGlobal("MAIN") :: Eval :: End :: Funcs
+      .map({ case (k, (n, b)) => GlobStart(k, n) :: b })
+      .toList
+      .flatten
   }
 }

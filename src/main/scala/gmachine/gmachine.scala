@@ -14,12 +14,22 @@ object Gmachine extends ServerApp {
 
   val service = CORS(
     HttpService {
-      case req @ POST -> Root => {
+      case req @ POST -> Root / "gcode" => {
         req.as(jsonOf[Input]) flatMap (input => {
           InstructionsParser.ParseAll(input.code) match {
             case Left(err) => BadRequest(err)
             case Right(s)  => Ok(MySystem.run(s).asJson)
           }
+        })
+      }
+      case req @ POST -> Root / "lambda" => {
+        req.as(jsonOf[Input]) flatMap (input =>
+        FormulaParser.Parse(input.code) match {
+          case Right(value) => {
+            val sp = SuperCombinator.LambdaLifting(value)
+            Ok(Output(Compiler.Compile(sp).map(_.toString)).asJson)
+          }
+          case Left(err) => BadRequest(err)
         })
       }
     },

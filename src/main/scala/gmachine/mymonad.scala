@@ -14,6 +14,10 @@ case class NodeInt(i: Int) extends NodeValue {
   override def toString = s"$i"
 }
 
+case class NodeBool(b: Boolean) extends NodeValue {
+  override def toString = s"$b"
+}
+
 case class NodeApp(
     l: Int,
     r: Int
@@ -89,7 +93,8 @@ case object MySystem {
     m.flatMap(
         machine =>
           if (machine.commandsLimit > 0) {
-            MyMonad.unit(machine.copy(commandsLimit = machine.commandsLimit - 1))
+            MyMonad
+              .unit(machine.copy(commandsLimit = machine.commandsLimit - 1))
           } else {
             MyMonad[Machine](Nil, Left("commands limit exceeded"))
           }
@@ -102,6 +107,7 @@ case object MySystem {
               val f = machine.commands.head match {
                 case Push(k)       => push(k)
                 case PushInt(n)    => pushInt(n)
+                case PushBool(n)   => pushBool(n)
                 case PushGlobal(s) => pushGlob(s)
                 case Pop(k)        => pop(k)
                 case Slide(k)      => slide(k)
@@ -109,13 +115,16 @@ case object MySystem {
                 case Alloc(k)      => alloc(k)
                 case Add           => ensureTwoIntsReturnInt(_ + _)
                 case Mul           => ensureTwoIntsReturnInt(_ * _)
-                case Div           => ensureTwoIntsReturnInt(_ - _)
-                case Sub           => ensureTwoIntsReturnInt(_ / _)
+                case Div           => ensureTwoIntsReturnInt(_ / _)
+                case Sub           => ensureTwoIntsReturnInt(_ - _)
                 case Gte           => ensureTwoIntsReturnBool(_ >= _)
                 case MkAp          => mkAp()
                 case Eval          => eval()
                 case Unwind        => unwind()
                 case Ret           => ret()
+                case Label(_)      => skipInstr()
+                case Jump(k)       => jump(k)
+                case JFalse(k)     => jFalse(k)
                 case _             => ???
               }
               Recursive(f(machine))
@@ -139,7 +148,8 @@ case object MySystem {
       MyMonad(initDiff(newM, m) :: Nil, Right(newM))
     }
   }
-  def pushInt(k: Int): Machine => MyMonad[Machine] = { (m: Machine) => {
+  def pushInt(k: Int): Machine => MyMonad[Machine] = { (m: Machine) =>
+    {
       val n = Node(m.counter, NodeInt(k))
       val newM = m.copy(
         counter = m.counter + 1,
@@ -152,7 +162,22 @@ case object MySystem {
       MyMonad(diff :: Nil, Right(newM))
     }
   }
-  def pushGlob(k: String): Machine => MyMonad[Machine] = { (m: Machine) => {
+  def pushBool(k: Boolean): Machine => MyMonad[Machine] = { (m: Machine) =>
+    {
+      val n = Node(m.counter, NodeBool(k))
+      val newM = m.copy(
+        counter = m.counter + 1,
+        stack = m.counter :: m.stack,
+        graph = m.graph + (n.id -> n),
+        commands = m.commands.drop(1)
+      )
+      val diff =
+        initDiff(newM, m).copy(add = GraphDiff(n.toNodeView :: Nil, Nil))
+      MyMonad(diff :: Nil, Right(newM))
+    }
+  }
+  def pushGlob(k: String): Machine => MyMonad[Machine] = { (m: Machine) =>
+    {
       m.funcs
         .get(k)
         .map(Node(m.counter, _))
@@ -225,7 +250,7 @@ case object MySystem {
         remove = GraphDiff(m.getID(kid).toNodeView :: Nil, Nil)
       )
       MyMonad(diff :: Nil, Right(newM))
-      }
+    }
   }
   def alloc(k: Int): Machine => MyMonad[Machine] = { (m: Machine) =>
     {
@@ -289,9 +314,7 @@ case object MySystem {
       f: (Int, Int) => Boolean
   ): Machine => MyMonad[Machine] = {
     ensureTwoInts((k1, k2, m) => {
-      val fName = if (f(k1, k2)) Tru else Fls
-      val fun = m.funcs.get(fName.toString).get
-      val n = Node(m.counter, fun)
+      val n = Node(m.counter, NodeBool(f(k1, k2)))
       val newM = m.copy(
         counter = m.counter + 1,
         stack = m.counter :: (m.stack.drop(2)),
@@ -305,7 +328,7 @@ case object MySystem {
   }
 
   def ensureTwoInts(
-    f: (Int, Int, Machine) => MyMonad[Machine]
+      f: (Int, Int, Machine) => MyMonad[Machine]
   ): Machine => MyMonad[Machine] = { (m: Machine) =>
     if (m.stack.length < 2) {
       MyMonad(
@@ -422,6 +445,52 @@ case object MySystem {
       MyMonad(initDiff(newM, m) :: Nil, Right(newM))
     }
   }
+
+  def jump(k: Int): Machine => MyMonad[Machine] = { (m: Machine) =>
+    {
+      val newCommands = m.commands.dropWhile({
+        case Label(m) =>  m != k
+        case _ => true
+      })
+      newCommands match {
+        case Nil => MyMonad(Nil, Left(s"can't found LABEL $k to JUMP"))
+        case _ =>  {
+          val newM = m.copy(
+            commands = newCommands,
+          )
+          MyMonad(initDiff(newM, m) :: Nil, Right(newM))
+        }
+      }
+    }
+  }
+
+  def jFalse(k: Int): Machine => MyMonad[Machine] = { (m: Machine) =>
+    {
+      if (m.stack.length < 1) {
+        MyMonad(
+          Nil,
+          Left(
+            s"not enough values in stack for ${m.commands.head}, have only " + m.stack.length + " values, want " + 1
+          )
+        )
+      } else {
+        m.getID(m.stack.head).v match  {
+          case NodeBool(true) => {
+            skipInstr()(m)
+          }
+          case NodeBool(false) => jump(k)(m)
+          case _ => MyMonad(Nil, Left("not a bool node on the top of stack"))
+        }
+      }
+    }
+  }
+
+  def skipInstr(): Machine => MyMonad[Machine] = { (m: Machine) =>
+      val newM = m.copy(commands = m.commands.tail)
+      MyMonad(initDiff(newM, m) :: Nil, Right(newM))
+  }
+
+
 }
 
 case class MyMonad[T](mo: (List[Diff], Either[String, T])) {

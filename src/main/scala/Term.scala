@@ -32,22 +32,18 @@ case object IntDiv extends BuiltIn {
   override def toString = "DIV"
 }
 
-case object IntMult extends BuiltIn{
+case object IntMult extends BuiltIn {
   override def toString = "MUL"
 }
 
-case object IntGte extends BuiltIn{
+case object IntGte extends BuiltIn {
   override def toString = "GTE"
 }
 
-case object IFClause extends BuiltIn{
+case object IFClause extends BuiltIn {
   override def toString = "IF"
 }
 
-case object Tru extends BuiltIn{
-  override def toString = "TRU"
-}
-
-case object Fls extends BuiltIn{
-  override def toString = "FLS"
+case class BoolTerm(value: Boolean) extends BuiltIn {
+  override def toString = value.toString.toUpperCase
 }
