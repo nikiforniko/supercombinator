@@ -1,3 +1,5 @@
+package gmachine.machine
+
 case class NodeView(
     id: Int,
     label: String,
@@ -23,15 +25,7 @@ case class Diff(
     stack: List[NodeView]
 )
 
-case class Input(
-    code: String
-)
-
 case class DiffWithErr(
     diff: List[Diff],
     err: Option[String]
-)
-
-case class Output(
-  result: List[String],
 )

@@ -1,3 +1,7 @@
+package gmachine.machine
+
+import gmachine.parser._
+
 case class Node(
     id: Int,
     v: NodeValue
@@ -49,7 +53,7 @@ case class Machine(
   def getID(k: Int): Node = graph.get(k).get
 }
 
-case object MySystem {
+case object Machine {
   def run(instrs: List[Instruction]): DiffWithErr =
     check(instrs) match {
       case s @ Some(x) => DiffWithErr(Nil, s)
@@ -449,14 +453,14 @@ case object MySystem {
   def jump(k: Int): Machine => MyMonad[Machine] = { (m: Machine) =>
     {
       val newCommands = m.commands.dropWhile({
-        case Label(m) =>  m != k
-        case _ => true
+        case Label(m) => m != k
+        case _        => true
       })
       newCommands match {
         case Nil => MyMonad(Nil, Left(s"can't found LABEL $k to JUMP"))
-        case _ =>  {
+        case _ => {
           val newM = m.copy(
-            commands = newCommands,
+            commands = newCommands
           )
           MyMonad(initDiff(newM, m) :: Nil, Right(newM))
         }
@@ -474,22 +478,21 @@ case object MySystem {
           )
         )
       } else {
-        m.getID(m.stack.head).v match  {
+        m.getID(m.stack.head).v match {
           case NodeBool(true) => {
             skipInstr()(m)
           }
           case NodeBool(false) => jump(k)(m)
-          case _ => MyMonad(Nil, Left("not a bool node on the top of stack"))
+          case _               => MyMonad(Nil, Left("not a bool node on the top of stack"))
         }
       }
     }
   }
 
   def skipInstr(): Machine => MyMonad[Machine] = { (m: Machine) =>
-      val newM = m.copy(commands = m.commands.tail)
-      MyMonad(initDiff(newM, m) :: Nil, Right(newM))
+    val newM = m.copy(commands = m.commands.tail)
+    MyMonad(initDiff(newM, m) :: Nil, Right(newM))
   }
-
 
 }
 

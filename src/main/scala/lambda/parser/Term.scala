@@ -1,4 +1,9 @@
-trait Term
+package lambda.parser
+
+import scala.util.parsing.input.Positional
+import lambda.supercombinator.SCTerm
+
+sealed trait Term extends Positional
 
 case class Var(name: String) extends Term {
   override def toString(): String = name
@@ -11,7 +16,7 @@ case class Appl(first: Term, second: Term) extends Term {
 
 case class Abstr(variable: Var, body: Term) extends Term {
   override def toString(): String =
-    "λ" + variable + "." + body + ""
+    "λ" + variable + "->" + body + ""
 }
 
 trait BuiltIn extends Term with SCTerm
@@ -20,27 +25,27 @@ case class IntTerm(value: Int) extends BuiltIn {
   override def toString = value.toString
 }
 
-case object IntSum extends BuiltIn {
+case class IntSum() extends BuiltIn {
   override def toString = "SUM"
 }
 
-case object IntSub extends BuiltIn {
+case class IntSub() extends BuiltIn {
   override def toString = "SUB"
 }
 
-case object IntDiv extends BuiltIn {
+case class IntDiv() extends BuiltIn {
   override def toString = "DIV"
 }
 
-case object IntMult extends BuiltIn {
+case class IntMult() extends BuiltIn {
   override def toString = "MUL"
 }
 
-case object IntGte extends BuiltIn {
+case class IntGte() extends BuiltIn {
   override def toString = "GTE"
 }
 
-case object IFClause extends BuiltIn {
+case class IFClause() extends BuiltIn {
   override def toString = "IF"
 }
 

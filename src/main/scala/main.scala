@@ -9,28 +9,45 @@ import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import scala.concurrent.duration._
+import lambda.lexer.LambdaLexer
+import lambda.parser.LambdaParser
+import gmachine.parser.InstructionsParser
+import gmachine.machine.Machine
+import lambda.supercombinator.SuperCombinator
+import lambda.compiler.Compiler
 
-object Gmachine extends ServerApp {
+object Main extends ServerApp {
 
   val service = CORS(
     HttpService {
       case req @ POST -> Root / "gcode" => {
         req.as(jsonOf[Input]) flatMap (input => {
           InstructionsParser.ParseAll(input.code) match {
-            case Left(err) => BadRequest(err)
-            case Right(s)  => Ok(MySystem.run(s).asJson)
+            case Left(err) => BadRequest(Error(err).asJson)
+            case Right(s)  => Ok(Machine.run(s).asJson)
           }
         })
       }
       case req @ POST -> Root / "lambda" => {
-        req.as(jsonOf[Input]) flatMap (input =>
-        FormulaParser.Parse(input.code) match {
-          case Right(value) => {
-            val sp = SuperCombinator.LambdaLifting(value)
-            Ok(Output(Compiler.Compile(sp).map(_.toString)).asJson)
-          }
-          case Left(err) => BadRequest(err)
-        })
+        req.as(jsonOf[Input]) flatMap (
+            input =>
+              LambdaLexer
+                .Parse(input.code)
+                .flatMap(
+                  tokens =>
+                    LambdaParser
+                      .Parse(tokens)
+                      .flatMap(value => {
+                        val sp = SuperCombinator.LambdaLifting(value)
+                        Right(
+                          Output(Compiler.Compile(sp).map(_.toString)).asJson
+                        )
+                      })
+                ) match {
+                case Left(a)  => BadRequest(Error(a).asJson)
+                case Right(b) => Ok(b)
+              }
+          )
       }
     },
     CORSConfig(

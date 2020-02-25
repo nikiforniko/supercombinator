@@ -1,4 +1,7 @@
+package gmachine.parser
+
 import scala.util.parsing.combinator._
+
 object InstructionsParser extends RegexParsers {
   val eol = System.getProperty("line.separator")
   val instructionMap: Map[String, Instruction] =
@@ -17,15 +20,15 @@ object InstructionsParser extends RegexParsers {
     case "POP" ~ v     => Pop(v.toInt)
     case "ALLOC" ~ v   => Alloc(v.toInt)
     case "LABEL" ~ v   => Label(v.toInt)
-    case "JUMP" ~ v   => Jump(v.toInt)
-    case "JFALSE" ~ v   => JFalse(v.toInt)
+    case "JUMP" ~ v    => Jump(v.toInt)
+    case "JFALSE" ~ v  => JFalse(v.toInt)
   })
   val instructionWithString
       : Parser[Instruction] = "PUSHGLOBAL" ~ """(\w+)""".r ^^ ({
     case _ ~ v => PushGlobal(v)
   })
   val pushBool: Parser[Instruction] = "PUSHBOOL" ~ """(TRUE|FALSE)""".r ^^ ({
-    case _ ~ "TRUE" => PushBool(true)
+    case _ ~ "TRUE"  => PushBool(true)
     case _ ~ "FALSE" => PushBool(false)
   })
   val globalStart
