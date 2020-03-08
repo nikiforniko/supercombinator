@@ -12,6 +12,10 @@ case class Arrow() extends LambdaToken
 case class LambdaStart() extends LambdaToken
 case class LeftBracket() extends LambdaToken
 case class RightBracket() extends LambdaToken
+case class LetToken() extends LambdaToken
+case class LetRecToken() extends LambdaToken
+case class Assign() extends LambdaToken
+case class In() extends LambdaToken
 
 case class SUM() extends LambdaToken
 case class SUB() extends LambdaToken

@@ -23,6 +23,10 @@ object LambdaLexer extends RegexParsers {
   def leftBracket = positioned { "(" ^^ (_ => LeftBracket()) }
   def rightBracket = positioned { ")" ^^ (_ => RightBracket()) }
   def arrow = positioned { "->" ^^ (_ => Arrow()) }
+  def let = positioned { "let" ^^ (_ => LetToken()) }
+  def letRec = positioned { "letrec" ^^ (_ => LetRecToken()) }
+  def assign = positioned { "=" ^^ (_ => Assign()) }
+  def in = positioned { "in" ^^ (_ => In()) }
   def sum = positioned { "+" ^^ (_ => SUM()) }
   def sub = positioned { "-" ^^ (_ => SUB()) }
   def mul = positioned { "*" ^^ (_ => MUL()) }
@@ -41,7 +45,7 @@ object LambdaLexer extends RegexParsers {
   def tokens: Parser[List[LambdaToken]] = {
     phrase(
       rep1(
-        arrow | ops | cmps | brackets | lambdaStart | intValue | boolValue | _if | varName
+        arrow | ops | cmps | brackets | lambdaStart | intValue | boolValue | _if | letRec | let | assign | in | varName
       )
     ) ^^ (tokens => tokens)
   }

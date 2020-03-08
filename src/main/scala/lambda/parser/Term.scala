@@ -16,7 +16,29 @@ case class Appl(first: Term, second: Term) extends Term {
 
 case class Abstr(variable: Var, body: Term) extends Term {
   override def toString(): String =
-    "λ" + variable + "->" + body + ""
+    "\\" + variable + " -> " + body
+}
+
+sealed trait LetExp extends Term {
+  val assigns: List[(Var, Term)]
+  val in: Term
+  val name: String
+
+  override def toString(): String =
+    name + "  " + assigns
+      .map(x => x._1 + " = " + x._2)
+      .mkString("\n") + " in " + in
+  def copy(a: List[(Var, Term)], in: Term): LetExp
+}
+
+case class Let(assigns: List[(Var, Term)], in: Term) extends LetExp{
+  override val name = "let"
+  override def copy(a: List[(Var, Term)], in: Term): LetExp = Let(a, in)
+}
+
+case class LetRec(assigns: List[(Var, Term)], in: Term) extends LetExp{
+  override val name = "letrec"
+  override def copy(a: List[(Var, Term)], in: Term): LetExp = LetRec(a, in)
 }
 
 trait BuiltIn extends Term with SCTerm

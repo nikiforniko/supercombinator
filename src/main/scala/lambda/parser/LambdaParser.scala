@@ -36,6 +36,18 @@ object LambdaParser extends PackratParsers {
     }
   }
 
+  lazy val letP: PackratParser[Let] = positioned {
+    (LetToken() ~> rep1((varP <~ Assign()) ~ term) <~ In()) ~ term ^^ {
+      case list ~ in => Let(list.map({ case x ~ y => (x, y) }), in)
+    }
+  }
+
+  lazy val letRecP: PackratParser[LetRec] = positioned {
+    (LetRecToken() ~> rep1((varP <~ Assign()) ~ term) <~ In()) ~ term ^^ {
+      case list ~ in => LetRec(list.map({ case x ~ y => (x, y) }), in)
+    }
+  }
+
   def number: Parser[IntTerm] = positioned {
     _number ^^ {
       case IntValue(i) => IntTerm(i)
@@ -65,7 +77,7 @@ object LambdaParser extends PackratParsers {
     }
   }
   lazy val term
-      : PackratParser[Term] = abstrP | varP | applP | builtin | number | bool
+      : PackratParser[Term] = letRecP | letP | abstrP | applP | builtin | number | bool | varP
 
   def Parse(tokens: Seq[LambdaToken]): Either[String, Term] =
     term.apply(new PackratReader(new LambdaTokenReader(tokens))) match {
