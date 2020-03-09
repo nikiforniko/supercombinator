@@ -31,6 +31,15 @@ object Compiler {
         Funcs += (funcName -> (d.vars.length, FScheme(d, n, r)))
         List[Instruction](PushGlobal(funcName))
       }
+      case SCLet(v, t, in) => CScheme(t, n, r) ++ CScheme(in, n + 1, r  + (v -> (n+1))) :+ Slide(1)
+      case SCLetRec(assigns, in) => {
+        // TODO(a.eremeev) val ... = assigns.length
+        val newR = r ++ (assigns.map(_._1).zip(Range(n + 1, n + 1 +  assigns.length)))
+        val newN = n + assigns.length
+        Alloc(assigns.length) :: assigns.map(x => CScheme(x._2, newN, newR)).zip(Range(0, assigns.length)).map({
+          case (l, k) => l :+ Update(assigns.length - k)
+        }).flatten ++ CScheme(in, newN, newR) :+ Slide(assigns.length)
+      }
       case _ => List[Instruction](PushGlobal(prog.toString))
     }
   }

@@ -61,16 +61,19 @@ object SuperCombinator {
           None
         )
       }
-      case le : LetExp => {
-        val passBounds = boundVariables ++ le.assigns.map(_._1)
+      case Let(v, t, in) => {
+        val passBounds = boundVariables + v
+        val (scIn, boundsIn, freeIn, _) = lambdaLifting(in, passBounds, freeVariables)
+        val (scT, boundsT, freeT, forWrap) = lambdaLifting(t, passBounds, freeVariables)
+        val m = forWrap.map(x => Map(v.name -> ApplyNArgs(SCVar(v.name), x))).getOrElse(Map.empty)
+        (SCLet(SCVar(v.name), scT, changeVariables(scIn, m)), boundsIn ++ boundsT - v, freeIn ++ freeT, None)
+      }
+      case LetRec(assigns, in) => {
+        val passBounds = boundVariables ++ assigns.map(_._1)
         val (scRes, newBounds, newFree, _) =
-          lambdaLifting(le.in, passBounds, freeVariables)
-        val result = le.assigns.foldLeft[(SCLetExp, Set[Var], Set[Var], Map[String, SCTerm])](
-          (le match {
-            case Let(_,_) => SCLet(Nil, scRes)
-            case LetRec(_,_) =>  SCLetRec(Nil, scRes)
-          }
-          , newBounds, newFree, Map.empty[String, SCTerm])
+          lambdaLifting(in, passBounds, freeVariables)
+        val result = assigns.foldLeft(
+            (SCLetRec(Nil, scRes), newBounds, newFree, Map.empty[String, SCTerm])
         )((z, x) => {
           val (term, bounds, free, forWrap) =
             lambdaLifting(x._2, passBounds, freeVariables)
@@ -84,7 +87,7 @@ object SuperCombinator {
             newMap
           )
         })
-        val newNewBound = result._2 -- le.assigns.map(_._1)
+        val newNewBound = result._2 -- assigns.map(_._1)
 
         (
           changeVariables(result._1, result._4, true),
@@ -119,13 +122,19 @@ object SuperCombinator {
           vs,
           changeVariables(body, m.filterKeys(!vs.map(_.name).contains(_)))
         )
-      case le: SCLetExp => {
+      case SCLet(v, t, in) => {
         val newMap = m.filterKeys(
-          k => includeLetVars || !le.assigns.map(_._1.toString).contains(k)
+          k => includeLetVars || k != v.name
         )
-        le.copy(
-          le.assigns.map(x => (x._1, changeVariables(x._2, newMap))),
-          changeVariables(le.in, newMap)
+        SCLet(v, changeVariables(t, newMap), changeVariables(in, newMap))
+      }
+      case SCLetRec(assigns, in) => {
+        val newMap = m.filterKeys(
+          k => includeLetVars || !assigns.map(_._1.toString).contains(k)
+        )
+        SCLetRec(
+          assigns.map(x => (x._1, changeVariables(x._2, newMap))),
+          changeVariables(in, newMap)
         )
       }
       case SCVar(name) => m.getOrElse(name, sp)

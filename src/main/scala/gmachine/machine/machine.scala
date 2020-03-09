@@ -58,7 +58,7 @@ case object Machine {
     check(instrs) match {
       case s @ Some(x) => DiffWithErr(Nil, s)
       case None =>
-        startJob(Machine(0, 10000, Nil, Map.empty, instrs, Nil, Map.empty))
+        startJob(Machine(0, 1000, Nil, Map.empty, instrs, Nil, Map.empty))
     }
 
   def initDiff(m: Machine, oldM: Machine): Diff = {

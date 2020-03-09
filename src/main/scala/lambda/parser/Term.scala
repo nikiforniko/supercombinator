@@ -19,26 +19,16 @@ case class Abstr(variable: Var, body: Term) extends Term {
     "\\" + variable + " -> " + body
 }
 
-sealed trait LetExp extends Term {
-  val assigns: List[(Var, Term)]
-  val in: Term
-  val name: String
+case class Let(v: Var, t: Term, in: Term) extends Term{
+  override def toString(): String = 
+    s"let $v = $t in $in"
+}
 
+case class LetRec(assigns: List[(Var, Term)], in: Term) extends Term {
   override def toString(): String =
-    name + "  " + assigns
+    "letrec  " + assigns
       .map(x => x._1 + " = " + x._2)
       .mkString("\n") + " in " + in
-  def copy(a: List[(Var, Term)], in: Term): LetExp
-}
-
-case class Let(assigns: List[(Var, Term)], in: Term) extends LetExp{
-  override val name = "let"
-  override def copy(a: List[(Var, Term)], in: Term): LetExp = Let(a, in)
-}
-
-case class LetRec(assigns: List[(Var, Term)], in: Term) extends LetExp{
-  override val name = "letrec"
-  override def copy(a: List[(Var, Term)], in: Term): LetExp = LetRec(a, in)
 }
 
 trait BuiltIn extends Term with SCTerm

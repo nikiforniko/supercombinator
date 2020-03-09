@@ -37,8 +37,8 @@ object LambdaParser extends PackratParsers {
   }
 
   lazy val letP: PackratParser[Let] = positioned {
-    (LetToken() ~> rep1((varP <~ Assign()) ~ term) <~ In()) ~ term ^^ {
-      case list ~ in => Let(list.map({ case x ~ y => (x, y) }), in)
+    (LetToken() ~> ((varP <~ Assign()) ~ term) <~ In()) ~ term ^^ {
+      case x ~ y ~ in => Let(x, y, in)
     }
   }
 
