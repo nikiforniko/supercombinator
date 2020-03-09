@@ -12,7 +12,7 @@ object Compiler {
   var labelCounter: Int = 0;
   var Funcs =
     scala.collection.mutable.HashMap.empty[String, (Int, List[Instruction])];
-  def CScheme(prog: SCTerm, n: Int, r: Map[SCVar, Int]): List[Instruction] = {
+  def CScheme(prog: SCTerm, n: Int, r: Map[SCVar, Int], fName: Option[String]): List[Instruction] = {
     prog match {
       case SCAppl(SCAppl(SCAppl(IFClause(), cond), thn), els) => {
         labelCounter += 2

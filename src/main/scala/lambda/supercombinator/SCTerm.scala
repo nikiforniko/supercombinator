@@ -3,7 +3,7 @@ package lambda.supercombinator
 trait SCTerm
 
 case class SCVar(name: String) extends SCTerm {
-  override def toString: String = name.toString
+  override def toString: String = name
 }
 
 case class SCDef(vars: List[SCVar], body: SCTerm) extends SCTerm {

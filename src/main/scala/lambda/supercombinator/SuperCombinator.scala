@@ -11,26 +11,28 @@ object SuperCombinator {
       term: Term,
       boundVariables: Set[Var],
       freeVariables: Set[Var],
-      fromLambda: Boolean = false
+      fromLambda: Boolean = false,
+      funcName: Option[Var] = None,
   ): (SCTerm, Set[Var], Set[Var], Option[List[SCVar]]) = {
     term match {
       case Abstr(variable, body) => {
+        val abstrBound = funcName.map(Set(variable, _)).getOrElse(Set(variable))
         val (newSP, newBound, newFree, _) =
           if (fromLambda) {
             lambdaLifting(
               body,
-              boundVariables + (variable),
+              boundVariables ++ abstrBound,
               freeVariables,
               true
             )
           } else {
-            lambdaLifting(body, Set(variable), freeVariables, true)
+            lambdaLifting(body, abstrBound, freeVariables, true)
           }
         val func: SCDef = newSP match {
           case SCDef(vars, body) => SCDef(SCVar(variable name) +: vars, body)
           case default           => SCDef(List(SCVar(variable.name)), newSP)
         }
-        val newNewBound = newBound - variable
+        val newNewBound = newBound -- abstrBound
         if (newNewBound isEmpty) {
           val vars = newFree.toList.map(x => SCVar(x.name))
           (
@@ -76,7 +78,7 @@ object SuperCombinator {
             (SCLetRec(Nil, scRes), newBounds, newFree, Map.empty[String, SCTerm])
         )((z, x) => {
           val (term, bounds, free, forWrap) =
-            lambdaLifting(x._2, passBounds, freeVariables)
+            lambdaLifting(x._2, passBounds, freeVariables, false, Some(x._1))
           val newMap = forWrap
             .map(w => z._4 + (x._1.name -> ApplyNArgs(SCVar(x._1.name), w)))
             .getOrElse(z._4)
