@@ -6,8 +6,12 @@ case class SCVar(name: String) extends SCTerm {
   override def toString: String = name
 }
 
-case class SCDef(vars: List[SCVar], body: SCTerm) extends SCTerm {
-  override def toString: String = "[" + vars.mkString(" ") + "]" + body
+case class SCDef(vars: List[SCVar], body: SCTerm, name: String = "lmbd") extends SCTerm {
+  override def toString: String = "$" + name + " [" + vars.mkString(" ") + "]" + body
+}
+
+case class SCFuncCall(name: String) extends SCTerm {
+  override def toString: String = "$" + name
 }
 
 case class SCAppl(term1: SCTerm, term2: SCTerm) extends SCTerm {

@@ -29,7 +29,7 @@ object SuperCombinator {
             lambdaLifting(body, abstrBound, freeVariables, true)
           }
         val func: SCDef = newSP match {
-          case SCDef(vars, body) => SCDef(SCVar(variable name) +: vars, body)
+          case SCDef(vars, body, _) => SCDef(SCVar(variable name) +: vars, body)
           case default           => SCDef(List(SCVar(variable.name)), newSP)
         }
         val newNewBound = newBound -- abstrBound
@@ -39,7 +39,8 @@ object SuperCombinator {
             ApplyNArgs(
               SCDef(
                 vars ++ func.vars,
-                func.body
+                func.body,
+                funcName.map(_.name).getOrElse("lmbd")
               ),
               vars
             ),
@@ -67,7 +68,7 @@ object SuperCombinator {
         val passBounds = boundVariables + v
         val (scIn, boundsIn, freeIn, _) = lambdaLifting(in, passBounds, freeVariables)
         val (scT, boundsT, freeT, forWrap) = lambdaLifting(t, passBounds, freeVariables)
-        val m = forWrap.map(x => Map(v.name -> ApplyNArgs(SCVar(v.name), x))).getOrElse(Map.empty)
+        val m = forWrap.map(x => Map(v.name -> ApplyNArgs(SCFuncCall(v.name), x))).getOrElse(Map.empty)
         (SCLet(SCVar(v.name), scT, changeVariables(scIn, m)), boundsIn ++ boundsT - v, freeIn ++ freeT, None)
       }
       case LetRec(assigns, in) => {
@@ -80,7 +81,7 @@ object SuperCombinator {
           val (term, bounds, free, forWrap) =
             lambdaLifting(x._2, passBounds, freeVariables, false, Some(x._1))
           val newMap = forWrap
-            .map(w => z._4 + (x._1.name -> ApplyNArgs(SCVar(x._1.name), w)))
+            .map(w => z._4 + (x._1.name -> ApplyNArgs(SCFuncCall(x._1.name), w)))
             .getOrElse(z._4)
           (
             z._1.copy(z._1.assigns :+ (SCVar(x._1.name), term), z._1.in),
@@ -119,10 +120,11 @@ object SuperCombinator {
     sp match {
       case SCAppl(fst, snd) =>
         SCAppl(changeVariables(fst, m), changeVariables(snd, m))
-      case SCDef(vs, body) =>
+      case SCDef(vs, body, name) =>
         SCDef(
           vs,
-          changeVariables(body, m.filterKeys(!vs.map(_.name).contains(_)))
+          changeVariables(body, m.filterKeys(!vs.map(_.name).contains(_))),
+          name
         )
       case SCLet(v, t, in) => {
         val newMap = m.filterKeys(
