@@ -57,6 +57,26 @@ case class IntGte() extends BuiltIn {
   override def toString = "GTE"
 }
 
+case class IntGt() extends BuiltIn {
+  override def toString = "GT"
+}
+
+case class IntLte() extends BuiltIn {
+  override def toString = "LTE"
+}
+
+case class IntLt() extends BuiltIn {
+  override def toString = "LT"
+}
+
+case class IntEq() extends BuiltIn {
+  override def toString = "EQ"
+}
+
+case class IntNe() extends BuiltIn {
+  override def toString = "NE"
+}
+
 case class IFClause() extends BuiltIn {
   override def toString = "IF"
 }

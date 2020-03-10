@@ -16,15 +16,16 @@ object Compiler {
     scala.collection.mutable.HashMap.empty[String, (Int, List[Instruction])];
   def CScheme(prog: SCTerm, n: Int, r: Map[SCVar, Int], names: Map[String, String]): List[Instruction] = {
     prog match {
-      case SCAppl(SCAppl(SCAppl(IFClause(), cond), thn), els) => {
+      case IFClause() => {
         labelCounter += 2
-        (CScheme(cond, n, r, names) :+ Eval :+ JFalse(labelCounter - 1)) ++
-          (CScheme(thn, n, r, names) :+ Jump(labelCounter) :+ Label(labelCounter - 1)) ++
-          (CScheme(els, n, r, names) :+ Label(labelCounter))
+        val code = Push(0) :: Eval :: JFalse(labelCounter - 1) :: Push(1) :: Jump(labelCounter) :: Label(labelCounter - 1) :: Push(2) :: Label(labelCounter) :: Eval :: Update(4) :: Pop(3) :: Unwind :: Nil
+        val name = "IF" + (labelCounter - 1).toString + labelCounter.toString
+        Funcs += (name -> (3, code))
+        PushGlobal(name) :: Nil
       }
       case IntTerm(v)  => PushInt(v) :: Nil
       case BoolTerm(v) => PushBool(v) :: Nil
-k     case v: SCVar    => Push(n - (r get v get)) :: Nil // n - r(x)
+      case v: SCVar    => Push(n - (r get v get)) :: Nil // n - r(x)
       case SCAppl(fst, snd) =>
         CScheme(snd, n, r, names) ++ CScheme(fst, n + 1, r, names) :+ MkAp
       case d:  SCDef => {
@@ -71,10 +72,18 @@ k     case v: SCVar    => Push(n - (r get v get)) :: Nil // n - r(x)
       case IntDiv()  => Div
       case IntMult() => Mul
       case IntGte()  => Gte
+      case IntGt() => Gt
+      case IntLte() => Lte
+      case IntLt() => Lt
+      case IntEq() => Eq
+      case IntNe() => Ne
     }
   }
   def Compile(prog: SCTerm): List[Instruction] = {
-    Funcs ++= List[BuiltIn](IntSum(), IntSub(), IntDiv(), IntMult(), IntGte())
+    Funcs = scala.collection.mutable.HashMap.empty[String, (Int, List[Instruction])];
+    counter = 0
+    labelCounter = 0
+    Funcs ++= List[BuiltIn](IntSum(), IntSub(), IntDiv(), IntMult(), IntGt())
       .map(f => (f.toString -> ((2, BuiltIn2ArgDef(mapp(f))))))
     Funcs += ("MAIN" -> (0, RScheme(prog, 0, Map.empty)))
     Begin :: PushGlobal("MAIN") :: Eval :: End :: Funcs

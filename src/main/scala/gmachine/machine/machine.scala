@@ -122,6 +122,9 @@ case object Machine {
                 case Div           => ensureTwoIntsReturnInt(_ / _)
                 case Sub           => ensureTwoIntsReturnInt(_ - _)
                 case Gte           => ensureTwoIntsReturnBool(_ >= _)
+                case Gt           => ensureTwoIntsReturnBool(_ > _)
+                case Lte           => ensureTwoIntsReturnBool(_ <= _)
+                case Lt           => ensureTwoIntsReturnBool(_ < _)
                 case MkAp          => mkAp()
                 case Eval          => eval()
                 case Unwind        => unwind()
@@ -408,8 +411,7 @@ case object Machine {
               stack = m.stack.tail
                 .take(k)
                 .map(m.getID(_).v)
-                .map({ case NodeApp(_, n) => n }) ++ (m.stack.head :: m.stack
-                .drop(k + 1)),
+                .map({ case NodeApp(_, n) => n }) ++ (m.stack.drop(k)),
               commands = coms
             )
           }
@@ -478,11 +480,13 @@ case object Machine {
           )
         )
       } else {
-        m.getID(m.stack.head).v match {
+        val hd = m.stack.head
+        val newM = m.copy(stack = m.stack.tail)
+        m.getID(hd).v match {
           case NodeBool(true) => {
-            skipInstr()(m)
+            skipInstr()(newM)
           }
-          case NodeBool(false) => jump(k)(m)
+          case NodeBool(false) => jump(k)(newM)
           case _               => MyMonad(Nil, Left("not a bool node on the top of stack"))
         }
       }

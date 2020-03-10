@@ -65,6 +65,26 @@ case object Gte extends Instruction {
   override def toString = "GTE"
 }
 
+case object Gt extends Instruction {
+  override def toString = "GT"
+}
+
+case object Lte extends Instruction {
+  override def toString = "LTE"
+}
+
+case object Lt extends Instruction {
+  override def toString = "LT"
+}
+
+case object Eq extends Instruction {
+  override def toString = "EQ"
+}
+
+case object Ne extends Instruction {
+  override def toString = "NE"
+}
+
 case object Begin extends Instruction {
   override def toString = "BEGIN"
 }
