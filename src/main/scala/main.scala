@@ -64,3 +64,19 @@ object Main extends ServerApp {
       .mountService(service, "/")
       .start
 }
+
+object Main2 {
+  def main(args: Array[String]): Unit = {
+    val input = Iterator
+        .continually(readLine)
+        .takeWhile(_ != null)
+        .mkString("\n")
+    val res = for {
+      tokens <- LambdaLexer.Parse(input)
+      ast <- LambdaParser.Parse(tokens)
+      val sp = SuperCombinator.LambdaLifting(ast)
+      val code = Compiler.Compile(sp)
+    } yield Machine.runRes(code)
+    println(res)
+  }
+}

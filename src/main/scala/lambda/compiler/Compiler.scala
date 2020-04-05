@@ -83,7 +83,7 @@ object Compiler {
     Funcs = scala.collection.mutable.HashMap.empty[String, (Int, List[Instruction])];
     counter = 0
     labelCounter = 0
-    Funcs ++= List[BuiltIn](IntSum(), IntSub(), IntDiv(), IntMult(), IntGt())
+    Funcs ++= List[BuiltIn](IntSum(), IntSub(), IntDiv(), IntMult(), IntGt(), IntGte(), IntLte(), IntLt(), IntEq(), IntNe())
       .map(f => (f.toString -> ((2, BuiltIn2ArgDef(mapp(f))))))
     Funcs += ("MAIN" -> (0, RScheme(prog, 0, Map.empty)))
     Begin :: PushGlobal("MAIN") :: Eval :: End :: Funcs

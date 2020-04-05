@@ -1,0 +1,18 @@
+letrec 
+    isOne = \n -> ((== 1) n)
+    isZero = \n -> ((== 0) n)
+    prev = \n -> ((- n) 1)
+    pprev = \n -> ((- n) 2)
+    fibSum = \n -> ((+ (fib (prev n))) (fib (pprev n)))
+
+    fib = \n ->
+        (((IF 
+            (isZero n))
+            0) 
+            (((IF
+                (isOne n))
+                1)
+                (fibSum n)
+            )
+        )
+in (fib 10)

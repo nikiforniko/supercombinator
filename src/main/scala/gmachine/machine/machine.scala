@@ -1,6 +1,7 @@
 package gmachine.machine
 
 import gmachine.parser._
+import scala.annotation.tailrec
 
 case class Node(
     id: Int,
@@ -58,7 +59,12 @@ case object Machine {
     check(instrs) match {
       case s @ Some(x) => DiffWithErr(Nil, s)
       case None =>
-        startJob(Machine(0, 1000, Nil, Map.empty, instrs, Nil, Map.empty))
+        startJob(Machine(0, 1000, Nil, Map.empty, instrs, Nil, Map.empty))._1
+    }
+  def runRes(instrs: List[Instruction]): String =
+    startJob(Machine(0, 100000, Nil, Map.empty, instrs, Nil, Map.empty)) match {
+      case (DiffWithErr(_, Some(str)), _) => "ERROR: " + str
+      case (_, Some(n)) => n.toString()
     }
 
   def initDiff(m: Machine, oldM: Machine): Diff = {
@@ -73,7 +79,7 @@ case object Machine {
   // TODO(a.eremeev) Тут нужно проверить, что все BEGIN, END, GLOBALSTART расставлены правильно
   def check(instrs: List[Instruction]): Option[String] = None
 
-  def startJob(m: Machine): DiffWithErr = {
+  def startJob(m: Machine): (DiffWithErr, Option[NodeValue]) = {
     val main = m.commands.tail.takeWhile(_ != End)
     val funcs = m.commands.tail
       .dropWhile(_ != End)
@@ -89,12 +95,12 @@ case object Machine {
       )
       .toMap
     Recursive(MyMonad.unit(m.copy(commands = main, funcs = funcs))).mo match {
-      case (diffs, Left(str)) => DiffWithErr(diffs, Some(str))
-      case (diffs, _)         => DiffWithErr(diffs, None)
+      case (diffs, Left(str)) =>(DiffWithErr(diffs, Some(str)), None)
+      case (diffs, Right(m))        =>(DiffWithErr(diffs, None), m.stack.headOption.map(m.getID(_).v))
     }
   }
-  def Recursive(m: MyMonad[Machine]): MyMonad[Machine] = {
-    m.flatMap(
+  @tailrec def Recursive(m: MyMonad[Machine]): MyMonad[Machine] = {
+    val newRes = m.flatMap(
         machine =>
           if (machine.commandsLimit > 0) {
             MyMonad
@@ -125,6 +131,8 @@ case object Machine {
                 case Gt           => ensureTwoIntsReturnBool(_ > _)
                 case Lte           => ensureTwoIntsReturnBool(_ <= _)
                 case Lt           => ensureTwoIntsReturnBool(_ < _)
+                case Ne           => ensureTwoIntsReturnBool(_ != _)
+                case Eq           => ensureTwoIntsReturnBool(_ == _)
                 case MkAp          => mkAp()
                 case Eval          => eval()
                 case Unwind        => unwind()
@@ -134,10 +142,19 @@ case object Machine {
                 case JFalse(k)     => jFalse(k)
                 case _             => ???
               }
-              Recursive(f(machine))
+              f(machine)
             }
           }
       )
+      newRes match {
+        case MyMonad((_, Left(_))) => newRes
+        case MyMonad((_, Right(machine))) => if
+        (machine.commands.length == 0) {
+          newRes
+        } else {
+          Recursive(newRes)
+        }
+      }
   }
   def push(k: Int): Machine => MyMonad[Machine] = { (m: Machine) =>
     if (m.stack.length < k + 1) {
