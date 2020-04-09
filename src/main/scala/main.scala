@@ -21,15 +21,15 @@ object Main extends ServerApp {
   val service = CORS(
     HttpService {
       case req @ POST -> Root / "gcode" => {
-        req.as(jsonOf[Input]) flatMap (input => {
+        req.as(jsonOf[InputGCode]) flatMap (input => {
           InstructionsParser.ParseAll(input.code) match {
             case Left(err) => BadRequest(Error(err).asJson)
-            case Right(s)  => Ok(Machine.run(s).asJson)
+            case Right(s)  => Ok(Machine.run(s, input.onlyResult).asJson)
           }
         })
       }
       case req @ POST -> Root / "lambda" => {
-        req.as(jsonOf[Input]) flatMap (
+        req.as(jsonOf[InputLambda]) flatMap (
             input =>
               LambdaLexer
                 .Parse(input.code)
@@ -63,20 +63,4 @@ object Main extends ServerApp {
       .bindHttp(sys.env.getOrElse("PORT", "8080").toString().toInt)
       .mountService(service, "/")
       .start
-}
-
-object Main2 {
-  def main(args: Array[String]): Unit = {
-    val input = Iterator
-        .continually(readLine)
-        .takeWhile(_ != null)
-        .mkString("\n")
-    val res = for {
-      tokens <- LambdaLexer.Parse(input)
-      ast <- LambdaParser.Parse(tokens)
-      val sp = SuperCombinator.LambdaLifting(ast)
-      val code = Compiler.Compile(sp)
-    } yield Machine.runRes(code)
-    println(res)
-  }
 }

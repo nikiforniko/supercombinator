@@ -67,14 +67,14 @@ object LambdaParser extends PackratParsers {
   }
 
   def builtin: Parser[BuiltIn] = positioned {
-    (SUM() | SUB() | MUL() | DIV() | GTE() | GT() | LTE() | LT() | EQ() | NE() | IF()) ^^ {
+    (SUM() | SUB() | MUL() | DIV() | GE() | GT() | LE() | LT() | EQ() | NE() | IF()) ^^ {
       case SUM() => IntSum()
       case SUB() => IntSub()
       case MUL() => IntMult()
       case DIV() => IntDiv()
-      case GTE() => IntGte()
+      case GE() => IntGe()
       case GT() => IntGt()
-      case LTE() => IntLte()
+      case LE() => IntLe()
       case LT() => IntLt()
       case EQ() => IntEq()
       case NE() => IntNe()

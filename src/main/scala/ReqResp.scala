@@ -2,8 +2,13 @@ case class Output(
     result: List[String]
 )
 
-case class Input(
+case class InputLambda(
     code: String
+)
+
+case class InputGCode(
+    code: String,
+    onlyResult: Boolean
 )
 
 case class Error(

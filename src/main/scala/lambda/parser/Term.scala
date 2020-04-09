@@ -53,16 +53,16 @@ case class IntMult() extends BuiltIn {
   override def toString = "MUL"
 }
 
-case class IntGte() extends BuiltIn {
-  override def toString = "GTE"
+case class IntGe() extends BuiltIn {
+  override def toString = "GE"
 }
 
 case class IntGt() extends BuiltIn {
   override def toString = "GT"
 }
 
-case class IntLte() extends BuiltIn {
-  override def toString = "LTE"
+case class IntLe() extends BuiltIn {
+  override def toString = "LE"
 }
 
 case class IntLt() extends BuiltIn {

@@ -27,5 +27,6 @@ case class Diff(
 
 case class DiffWithErr(
     diff: List[Diff],
-    err: Option[String]
+    err: Option[String],
+    result: Option[String]
 )

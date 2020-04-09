@@ -71,9 +71,9 @@ object Compiler {
       case IntSub()  => Sub
       case IntDiv()  => Div
       case IntMult() => Mul
-      case IntGte()  => Gte
+      case IntGe()  => Ge
       case IntGt() => Gt
-      case IntLte() => Lte
+      case IntLe() => Le
       case IntLt() => Lt
       case IntEq() => Eq
       case IntNe() => Ne
@@ -83,7 +83,7 @@ object Compiler {
     Funcs = scala.collection.mutable.HashMap.empty[String, (Int, List[Instruction])];
     counter = 0
     labelCounter = 0
-    Funcs ++= List[BuiltIn](IntSum(), IntSub(), IntDiv(), IntMult(), IntGt(), IntGte(), IntLte(), IntLt(), IntEq(), IntNe())
+    Funcs ++= List[BuiltIn](IntSum(), IntSub(), IntDiv(), IntMult(), IntGt(), IntGe(), IntLe(), IntLt(), IntEq(), IntNe())
       .map(f => (f.toString -> ((2, BuiltIn2ArgDef(mapp(f))))))
     Funcs += ("MAIN" -> (0, RScheme(prog, 0, Map.empty)))
     Begin :: PushGlobal("MAIN") :: Eval :: End :: Funcs

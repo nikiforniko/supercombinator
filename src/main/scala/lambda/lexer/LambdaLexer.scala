@@ -31,8 +31,8 @@ object LambdaLexer extends RegexParsers {
   def sub = positioned { "-" ^^ (_ => SUB()) }
   def mul = positioned { "*" ^^ (_ => MUL()) }
   def div = positioned { "/" ^^ (_ => DIV()) }
-  def gte = positioned { ">=" ^^ (_ => GTE()) }
-  def lte = positioned { "<=" ^^ (_ => LTE()) }
+  def gte = positioned { ">=" ^^ (_ => GE()) }
+  def lte = positioned { "<=" ^^ (_ => LE()) }
   def lt = positioned { "<" ^^ (_ => LT()) }
   def gt = positioned { ">" ^^ (_ => GT()) }
   def _eq = positioned { "==" ^^ (_ => EQ()) }

@@ -22,8 +22,8 @@ case class SUB() extends LambdaToken
 case class MUL() extends LambdaToken
 case class DIV() extends LambdaToken
 
-case class GTE() extends LambdaToken
-case class LTE() extends LambdaToken
+case class GE() extends LambdaToken
+case class LE() extends LambdaToken
 case class LT() extends LambdaToken
 case class GT() extends LambdaToken
 case class EQ() extends LambdaToken

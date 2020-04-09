@@ -61,20 +61,20 @@ case object Div extends Instruction {
   override def toString = "DIV"
 }
 
-case object Gte extends Instruction {
-  override def toString = "GTE"
+case object Ge extends Instruction {
+  override def toString = "GE"
 }
 
 case object Gt extends Instruction {
   override def toString = "GT"
 }
 
-case object Lte extends Instruction {
-  override def toString = "LTE"
-}
-
 case object Lt extends Instruction {
   override def toString = "LT"
+}
+
+case object Le extends Instruction {
+  override def toString = "LE"
 }
 
 case object Eq extends Instruction {
