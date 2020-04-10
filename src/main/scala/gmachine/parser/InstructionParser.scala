@@ -3,7 +3,7 @@ package gmachine.parser
 import scala.util.parsing.combinator._
 
 object InstructionsParser extends RegexParsers {
-  val eol = System.getProperty("line.separator")
+  val eol = """(\r\n)|\r|\n"""
   val instructionMap: Map[String, Instruction] =
     (MkAp :: Get :: Eval :: Add :: Sub :: Div :: Mul :: Ge :: Gt :: Le :: Lt ::  Ne :: Eq :: Begin :: End :: Ret :: Unwind :: Nil)
       .map(x => (x.toString, x))
