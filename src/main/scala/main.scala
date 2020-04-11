@@ -60,7 +60,7 @@ object Main extends ServerApp {
 
   def server(args: List[String]) =
     BlazeBuilder
-      .bindHttp(sys.env.getOrElse("PORT", "8080").toString().toInt)
+      .bindHttp(sys.env.getOrElse("PORT", "8080").toString().toInt, "0.0.0.0")
       .mountService(service, "/")
       .start
 }
