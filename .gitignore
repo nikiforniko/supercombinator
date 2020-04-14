@@ -1,4 +1,5 @@
-/target/
+project/project
+project/target
+target
 src/main/scala/target/*
-project/*
 .idea/*
