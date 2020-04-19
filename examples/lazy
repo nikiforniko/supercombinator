@@ -1,4 +1,4 @@
 letrec 
-    rec = \n -> ((+ 1) (rec n))
+    rec = \n -> + 1 (rec n),
     k = \x -> \y -> x
-in ((k 1) (rec 1))
+in k 1 (rec 1)

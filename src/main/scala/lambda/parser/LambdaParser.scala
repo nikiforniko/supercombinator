@@ -24,12 +24,6 @@ object LambdaParser extends PackratParsers {
     accept("identifier", { case id @ VarName(v) => id })
   }
 
-  lazy val applP: PackratParser[Appl] = positioned {
-    LeftBracket() ~> term ~ term <~ RightBracket() ^^ {
-      case x ~ y => Appl(x, y)
-    }
-  }
-
   lazy val abstrP: PackratParser[Abstr] = positioned {
     (LambdaStart() ~> varP <~ Arrow()) ~ term ^^ {
       case v ~ b => Abstr(v, b)
@@ -43,7 +37,7 @@ object LambdaParser extends PackratParsers {
   }
 
   lazy val letRecP: PackratParser[LetRec] = positioned {
-    (LetRecToken() ~> rep1((varP <~ Assign()) ~ term) <~ In()) ~ term ^^ {
+    (LetRecToken() ~> rep1sep((varP <~ Assign()) ~ term, Comma()) <~ In()) ~ term ^^ {
       case list ~ in => LetRec(list.map({ case x ~ y => (x, y) }), in)
     }
   }
@@ -81,12 +75,21 @@ object LambdaParser extends PackratParsers {
       case IF()  => IFClause()
     }
   }
-  lazy val term
-      : PackratParser[Term] = letRecP | letP | abstrP | applP | builtin | number | bool | varP
+  lazy val termWOAppl
+      : PackratParser[Term] = letRecP | letP | abstrP | builtin | number | bool | varP | (LeftBracket() ~> term <~ RightBracket())
+
+  lazy val term : PackratParser[Term] =  positioned {
+    rep1(termWOAppl) ^^ {
+      case x::xs => xs.foldLeft(x){(func, arg) => Appl(func, arg)}
+    } | failure("illegal start of term")
+  }
 
   def Parse(tokens: Seq[LambdaToken]): Either[String, Term] =
     term.apply(new PackratReader(new LambdaTokenReader(tokens))) match {
-      case Success(result: Term, next) => Right(result)
+      case Success(result: Term, next) => {
+      println(result)
+      Right(result)
+      }
       case NoSuccess(msg, next) =>
         Left(s"$msg, at ${next.pos.line}:${next.pos.column}")
     }
