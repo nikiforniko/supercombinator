@@ -19,8 +19,8 @@ case class Abstr(variable: Var, body: Term) extends Term {
     "\\" + variable + " -> " + body
 }
 
-case class Let(v: Var, t: Term, in: Term) extends Term{
-  override def toString(): String = 
+case class Let(v: Var, t: Term, in: Term) extends Term {
+  override def toString(): String =
     s"let $v = $t in $in"
 }
 

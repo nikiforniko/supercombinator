@@ -46,7 +46,9 @@ object LambdaLexer extends RegexParsers {
   def tokens: Parser[List[LambdaToken]] = {
     phrase(
       rep1(
-        comma | arrow | ops | cmps | brackets | lambdaStart | intValue | boolValue | _if | letRec | let | assign | in | varName | failure("empty input")
+        comma | arrow | ops | cmps | brackets | lambdaStart | intValue | boolValue | _if | letRec | let | assign | in | varName | failure(
+          "empty input"
+        )
       )
     ) ^^ (tokens => tokens)
   }

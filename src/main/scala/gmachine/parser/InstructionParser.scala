@@ -5,7 +5,7 @@ import scala.util.parsing.combinator._
 object InstructionsParser extends RegexParsers {
   val eol = """(\r\n)|\r|\n"""
   val instructionMap: Map[String, Instruction] =
-    (MkAp :: Get :: Eval :: Add :: Sub :: Div :: Mul :: Ge :: Gt :: Le :: Lt ::  Ne :: Eq :: Begin :: End :: Ret :: Unwind :: Nil)
+    (MkAp :: Get :: Eval :: Add :: Sub :: Div :: Mul :: Ge :: Gt :: Le :: Lt :: Ne :: Eq :: Begin :: End :: Ret :: Unwind :: Nil)
       .map(x => (x.toString, x))
       .toMap
   val simpleInstruction: Parser[Instruction] = instructionMap.keys
@@ -41,7 +41,8 @@ object InstructionsParser extends RegexParsers {
   def Parse(code: String): Either[String, Instruction] =
     parseAll(instructions, code) match {
       case Success(result: Instruction, _) => Right(result)
-      case NoSuccess(msg, next)            => Left(msg + " at " + next.offset.toString + " of " + code)
+      case NoSuccess(msg, next) =>
+        Left(msg + " at " + next.offset.toString + " of " + code)
     }
   def ParseAll(code: String): Either[String, List[Instruction]] =
     code

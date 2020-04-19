@@ -12,7 +12,7 @@ object SuperCombinator {
       boundVariables: Set[Var],
       freeVariables: Set[Var],
       fromLambda: Boolean = false,
-      funcName: Option[Var] = None,
+      funcName: Option[Var] = None
   ): (SCTerm, Set[Var], Set[Var], Option[List[SCVar]]) = {
     term match {
       case Abstr(variable, body) => {
@@ -30,7 +30,7 @@ object SuperCombinator {
           }
         val func: SCDef = newSP match {
           case SCDef(vars, body, _) => SCDef(SCVar(variable name) +: vars, body)
-          case default           => SCDef(List(SCVar(variable.name)), newSP)
+          case default              => SCDef(List(SCVar(variable.name)), newSP)
         }
         val newNewBound = newBound -- abstrBound
         if (newNewBound isEmpty) {
@@ -66,22 +66,33 @@ object SuperCombinator {
       }
       case Let(v, t, in) => {
         val passBounds = boundVariables + v
-        val (scIn, boundsIn, freeIn, _) = lambdaLifting(in, passBounds, freeVariables)
-        val (scT, boundsT, freeT, forWrap) = lambdaLifting(t, passBounds, freeVariables)
-        val m = forWrap.map(x => Map(v.name -> ApplyNArgs(SCFuncCall(v.name), x))).getOrElse(Map.empty)
-        (SCLet(SCVar(v.name), scT, changeVariables(scIn, m)), boundsIn ++ boundsT - v, freeIn ++ freeT, None)
+        val (scIn, boundsIn, freeIn, _) =
+          lambdaLifting(in, passBounds, freeVariables)
+        val (scT, boundsT, freeT, forWrap) =
+          lambdaLifting(t, passBounds, freeVariables)
+        val m = forWrap
+          .map(x => Map(v.name -> ApplyNArgs(SCFuncCall(v.name), x)))
+          .getOrElse(Map.empty)
+        (
+          SCLet(SCVar(v.name), scT, changeVariables(scIn, m)),
+          boundsIn ++ boundsT - v,
+          freeIn ++ freeT,
+          None
+        )
       }
       case LetRec(assigns, in) => {
         val passBounds = boundVariables ++ assigns.map(_._1)
         val (scRes, newBounds, newFree, _) =
           lambdaLifting(in, passBounds, freeVariables)
         val result = assigns.foldLeft(
-            (SCLetRec(Nil, scRes), newBounds, newFree, Map.empty[String, SCTerm])
+          (SCLetRec(Nil, scRes), newBounds, newFree, Map.empty[String, SCTerm])
         )((z, x) => {
           val (term, bounds, free, forWrap) =
             lambdaLifting(x._2, passBounds, freeVariables, false, Some(x._1))
           val newMap = forWrap
-            .map(w => z._4 + (x._1.name -> ApplyNArgs(SCFuncCall(x._1.name), w)))
+            .map(
+              w => z._4 + (x._1.name -> ApplyNArgs(SCFuncCall(x._1.name), w))
+            )
             .getOrElse(z._4)
           (
             z._1.copy(z._1.assigns :+ (SCVar(x._1.name), term), z._1.in),

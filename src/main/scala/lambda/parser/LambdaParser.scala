@@ -66,29 +66,32 @@ object LambdaParser extends PackratParsers {
       case SUB() => IntSub()
       case MUL() => IntMult()
       case DIV() => IntDiv()
-      case GE() => IntGe()
-      case GT() => IntGt()
-      case LE() => IntLe()
-      case LT() => IntLt()
-      case EQ() => IntEq()
-      case NE() => IntNe()
+      case GE()  => IntGe()
+      case GT()  => IntGt()
+      case LE()  => IntLe()
+      case LT()  => IntLt()
+      case EQ()  => IntEq()
+      case NE()  => IntNe()
       case IF()  => IFClause()
     }
   }
   lazy val termWOAppl
       : PackratParser[Term] = letRecP | letP | abstrP | builtin | number | bool | varP | (LeftBracket() ~> term <~ RightBracket())
 
-  lazy val term : PackratParser[Term] =  positioned {
+  lazy val term: PackratParser[Term] = positioned {
     rep1(termWOAppl) ^^ {
-      case x::xs => xs.foldLeft(x){(func, arg) => Appl(func, arg)}
+      case x :: xs =>
+        xs.foldLeft(x) { (func, arg) =>
+          Appl(func, arg)
+        }
     } | failure("illegal start of term")
   }
 
   def Parse(tokens: Seq[LambdaToken]): Either[String, Term] =
     term.apply(new PackratReader(new LambdaTokenReader(tokens))) match {
       case Success(result: Term, next) => {
-      println(result)
-      Right(result)
+        println(result)
+        Right(result)
       }
       case NoSuccess(msg, next) =>
         Left(s"$msg, at ${next.pos.line}:${next.pos.column}")

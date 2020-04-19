@@ -50,10 +50,10 @@ case class Machine(
     commands: List[Instruction],
     dump: List[(List[Int], List[Instruction])],
     funcs: Map[String, NodeFun],
-    onlyResult: Boolean,
+    onlyResult: Boolean
 ) {
   def getID(k: Int): Node = graph.get(k).get
-  def lazyDiff(diff: => Diff): List[Diff] =  if (onlyResult) Nil else diff :: Nil
+  def lazyDiff(diff: => Diff): List[Diff] = if (onlyResult) Nil else diff :: Nil
 }
 
 case object Machine {
@@ -61,7 +61,18 @@ case object Machine {
     check(instrs) match {
       case s @ Some(x) => DiffWithErr(Nil, s, None)
       case None =>
-        startJob(Machine(0, if (onlyResult) 100000 else 1000, Nil, Map.empty, instrs, Nil, Map.empty, onlyResult))
+        startJob(
+          Machine(
+            0,
+            if (onlyResult) 100000 else 1000,
+            Nil,
+            Map.empty,
+            instrs,
+            Nil,
+            Map.empty,
+            onlyResult
+          )
+        )
     }
 
   def initDiff(m: Machine, oldM: Machine): Diff = {
@@ -93,11 +104,13 @@ case object Machine {
       .toMap
     Recursive(MyMonad.unit(m.copy(commands = main, funcs = funcs))).mo match {
       case (diffs, Left(str)) => DiffWithErr(diffs, Some(str), None)
-      case (diffs, Right(m))        =>DiffWithErr(diffs, None, m.stack.headOption.map(m.getID(_).v.toString))
+      case (diffs, Right(m)) =>
+        DiffWithErr(diffs, None, m.stack.headOption.map(m.getID(_).v.toString))
     }
   }
   @tailrec def Recursive(m: MyMonad[Machine]): MyMonad[Machine] = {
-    val newRes = m.flatMap(
+    val newRes = m
+      .flatMap(
         machine =>
           if (machine.commandsLimit > 0) {
             MyMonad
@@ -124,12 +137,12 @@ case object Machine {
                 case Mul           => ensureTwoIntsReturnInt(_ * _)
                 case Div           => ensureTwoIntsReturnInt(_ / _)
                 case Sub           => ensureTwoIntsReturnInt(_ - _)
-                case Ge           => ensureTwoIntsReturnBool(_ >= _)
-                case Gt           => ensureTwoIntsReturnBool(_ > _)
-                case Le           => ensureTwoIntsReturnBool(_ <= _)
-                case Lt           => ensureTwoIntsReturnBool(_ < _)
-                case Ne           => ensureTwoIntsReturnBool(_ != _)
-                case Eq           => ensureTwoIntsReturnBool(_ == _)
+                case Ge            => ensureTwoIntsReturnBool(_ >= _)
+                case Gt            => ensureTwoIntsReturnBool(_ > _)
+                case Le            => ensureTwoIntsReturnBool(_ <= _)
+                case Lt            => ensureTwoIntsReturnBool(_ < _)
+                case Ne            => ensureTwoIntsReturnBool(_ != _)
+                case Eq            => ensureTwoIntsReturnBool(_ == _)
                 case MkAp          => mkAp()
                 case Eval          => eval()
                 case Unwind        => unwind()
@@ -143,15 +156,15 @@ case object Machine {
             }
           }
       )
-      newRes match {
-        case MyMonad((_, Left(_))) => newRes
-        case MyMonad((_, Right(machine))) => if
-        (machine.commands.length == 0) {
+    newRes match {
+      case MyMonad((_, Left(_))) => newRes
+      case MyMonad((_, Right(machine))) =>
+        if (machine.commands.length == 0) {
           newRes
         } else {
           Recursive(newRes)
         }
-      }
+    }
   }
   def push(k: Int): Machine => MyMonad[Machine] = { (m: Machine) =>
     if (m.stack.length < k + 1) {
@@ -166,7 +179,7 @@ case object Machine {
         stack = m.stack.drop(k).head :: m.stack,
         commands = m.commands.drop(1)
       )
-      
+
       MyMonad(m.lazyDiff(initDiff(newM, m)), Right(newM))
     }
   }
@@ -179,7 +192,9 @@ case object Machine {
         graph = m.graph + (n.id -> n),
         commands = m.commands.drop(1)
       )
-      val diff = m.lazyDiff(initDiff(newM, m).copy(add = GraphDiff(n.toNodeView :: Nil, Nil)))
+      val diff = m.lazyDiff(
+        initDiff(newM, m).copy(add = GraphDiff(n.toNodeView :: Nil, Nil))
+      )
       MyMonad(diff, Right(newM))
     }
   }
@@ -192,7 +207,9 @@ case object Machine {
         graph = m.graph + (n.id -> n),
         commands = m.commands.drop(1)
       )
-      val diff = m.lazyDiff(initDiff(newM, m).copy(add = GraphDiff(n.toNodeView :: Nil, Nil)))
+      val diff = m.lazyDiff(
+        initDiff(newM, m).copy(add = GraphDiff(n.toNodeView :: Nil, Nil))
+      )
       MyMonad(diff, Right(newM))
     }
   }
@@ -208,7 +225,9 @@ case object Machine {
             graph = m.graph + (n.id -> n),
             commands = m.commands.drop(1)
           )
-          val diff = m.lazyDiff(initDiff(newM, m).copy(add = GraphDiff(n.toNodeView :: Nil, Nil)))
+          val diff = m.lazyDiff(
+            initDiff(newM, m).copy(add = GraphDiff(n.toNodeView :: Nil, Nil))
+          )
           MyMonad(diff, Right(newM))
         })
         .getOrElse(MyMonad(Nil, Left(s"Not Found Function $k")))
@@ -243,7 +262,7 @@ case object Machine {
         commands = m.commands.drop(1)
       )
       val diff = m.lazyDiff(initDiff(newM, m))
-      MyMonad(diff , Right(newM))
+      MyMonad(diff, Right(newM))
     }
   }
   //TODO UINT
@@ -264,11 +283,13 @@ case object Machine {
         graph = m.graph + (kid -> m.getID(m.stack.head).copy(id = kid)),
         commands = m.commands.drop(1)
       )
-      val diff = m.lazyDiff(initDiff(newM, m).copy(
-        add = GraphDiff(newM.getID(kid).toNodeView :: Nil, Nil),
-        remove = GraphDiff(m.getID(kid).toNodeView :: Nil, Nil)
-      ))
-      MyMonad(diff , Right(newM))
+      val diff = m.lazyDiff(
+        initDiff(newM, m).copy(
+          add = GraphDiff(newM.getID(kid).toNodeView :: Nil, Nil),
+          remove = GraphDiff(m.getID(kid).toNodeView :: Nil, Nil)
+        )
+      )
+      MyMonad(diff, Right(newM))
     }
   }
   def alloc(k: Int): Machine => MyMonad[Machine] = { (m: Machine) =>
@@ -283,10 +304,12 @@ case object Machine {
         graph = m.graph ++ mpairs.toMap,
         commands = m.commands.drop(1)
       )
-      val diff = m.lazyDiff(initDiff(newM, m).copy(
-        add = GraphDiff(mpairs.unzip._2.map(_.toNodeView), Nil)
-      ))
-      MyMonad(diff , Right(newM))
+      val diff = m.lazyDiff(
+        initDiff(newM, m).copy(
+          add = GraphDiff(mpairs.unzip._2.map(_.toNodeView), Nil)
+        )
+      )
+      MyMonad(diff, Right(newM))
     }
   }
   def mkAp(): Machine => MyMonad[Machine] = { (m: Machine) =>
@@ -305,8 +328,9 @@ case object Machine {
         graph = m.graph + (ap.id -> ap),
         commands = m.commands.drop(1)
       )
-      val diff =m.lazyDiff(
-        initDiff(newM, m).copy(add = GraphDiff(ap.toNodeView :: Nil, Nil)))
+      val diff = m.lazyDiff(
+        initDiff(newM, m).copy(add = GraphDiff(ap.toNodeView :: Nil, Nil))
+      )
       MyMonad(diff, Right(newM))
     }
   }
@@ -322,9 +346,11 @@ case object Machine {
         graph = m.graph + (m.counter -> newN),
         commands = m.commands.drop(1)
       )
-      val diff = m.lazyDiff(initDiff(newM, m).copy(
-        add = GraphDiff(newN.toNodeView :: Nil, Nil)
-      ))
+      val diff = m.lazyDiff(
+        initDiff(newM, m).copy(
+          add = GraphDiff(newN.toNodeView :: Nil, Nil)
+        )
+      )
       MyMonad(diff, Right(newM))
     })
   }
@@ -341,7 +367,8 @@ case object Machine {
         commands = m.commands.drop(1)
       )
       val diff = m.lazyDiff(
-        initDiff(newM, m).copy(add = GraphDiff(n.toNodeView :: Nil, Nil)))
+        initDiff(newM, m).copy(add = GraphDiff(n.toNodeView :: Nil, Nil))
+      )
       MyMonad(diff, Right(newM))
     })
   }
@@ -396,7 +423,7 @@ case object Machine {
           )
         case _ => m.copy(commands = m.commands.drop(1))
       }
-      MyMonad(m.lazyDiff(initDiff(newM, m)) , Right(newM))
+      MyMonad(m.lazyDiff(initDiff(newM, m)), Right(newM))
     }
   }
   def unwind(): Machine => MyMonad[Machine] = { (m: Machine) =>
@@ -460,7 +487,7 @@ case object Machine {
         dump = m.dump.tail,
         commands = m.dump.head._2
       )
-      MyMonad(m.lazyDiff(initDiff(newM, m)) , Right(newM))
+      MyMonad(m.lazyDiff(initDiff(newM, m)), Right(newM))
     }
   }
 
@@ -476,7 +503,7 @@ case object Machine {
           val newM = m.copy(
             commands = newCommands
           )
-          MyMonad(m.lazyDiff(initDiff(newM, m)) , Right(newM))
+          MyMonad(m.lazyDiff(initDiff(newM, m)), Right(newM))
         }
       }
     }
