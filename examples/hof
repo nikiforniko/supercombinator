@@ -1,0 +1,9 @@
+letrec
+    foldr = \start ->
+            \func  ->
+            \cnt   -> IF (> cnt 0)
+                          (foldr (func cnt start) func (- cnt 1))
+                          start,
+    sumFirst = foldr 0 + 10,
+    mulFirst = foldr 1 * 10
+in + (sumFirst 10) (mulFirst 10)

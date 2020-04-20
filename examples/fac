@@ -1,9 +1,7 @@
 letrec
-    gt1 = \n -> > n 1,
-    dec = \n -> - n 1,
-    facdec = \n -> * n (fac (dec n)),
+    facdec = \n -> * n (fac (- n 1)),
 
-    fac = \n -> IF (gt1 n)
+    fac = \n -> IF (> n 0)
                  (facdec n)
                  1
-in fac 5
+in fac 7
