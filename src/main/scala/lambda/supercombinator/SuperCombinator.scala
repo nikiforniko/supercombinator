@@ -37,11 +37,17 @@ object SuperCombinator {
           val vars = newFree.toList.map(x => SCVar(x.name))
           (
             ApplyNArgs(
-              SCDef(
-                vars ++ func.vars,
-                func.body,
-                funcName.map(_.name).getOrElse("lmbd")
-              ),
+              funcName.map(x =>
+                SCDef(
+                  vars ++ func.vars,
+                  func.body,
+                  x.name
+                  )).getOrElse(
+                    SCDef(
+                      vars ++ func.vars,
+                      func.body
+                      )
+                    ),
               vars
             ),
             freeVariables,
