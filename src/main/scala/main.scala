@@ -11,7 +11,7 @@ import io.circe.syntax._
 import scala.concurrent.duration._
 import lambda.lexer.LambdaLexer
 import lambda.parser.LambdaParser
-import gmachine.parser.InstructionsParser
+import gmachine.parser.GCodeParser
 import gmachine.machine.Machine
 import lambda.supercombinator.SuperCombinator
 import lambda.compiler.Compiler
@@ -22,7 +22,7 @@ object Main extends ServerApp {
     HttpService {
       case req @ POST -> Root / "gcode" => {
         req.as(jsonOf[InputGCode]) flatMap (input => {
-          InstructionsParser.ParseAll(input.code) match {
+          GCodeParser.parseGCode(input.code) match {
             case Left(err) => BadRequest(Error(err).asJson)
             case Right(s)  => Ok(Machine.run(s, input.onlyResult).asJson)
           }

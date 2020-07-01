@@ -1,6 +1,6 @@
 package gmachine.parser
 
-trait Instruction
+sealed trait Instruction
 
 case class Push(n: Int) extends Instruction {
   override def toString = s"PUSH $n"

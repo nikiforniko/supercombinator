@@ -9,7 +9,9 @@ lazy val root = (project in file("."))
   .settings(
     name := "lambda",
     libraryDependencies += scalaTest % Test,
+    libraryDependencies += "org.specs2" %% "specs2-core" % "4.8.1" % Test,
     libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
+    libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.2.2",
     libraryDependencies += "org.http4s" %% "http4s-dsl" % "0.17.5",
     libraryDependencies += "org.http4s" %% "http4s-blaze-server" % "0.17.5",
     libraryDependencies += "org.http4s" %% "http4s-blaze-client" % "0.17.5",
